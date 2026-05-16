@@ -1376,9 +1376,67 @@ function BloqueAbbina() {
 /* ------------------------------------------------------------------ */
 /*  BLOQUE 7 — ROLE PLAY CHAT                                         */
 /* ------------------------------------------------------------------ */
+function formatMessage(text: string): ReactNode {
+  // Split corrections block from main text
+  const correctionRegex = /((?:📝|✅).*)/s;
+  const corrMatch = text.match(correctionRegex);
+  const mainText = corrMatch ? text.slice(0, corrMatch.index).trim() : text;
+  const correctionText = corrMatch ? corrMatch[1].trim() : null;
+
+  // Parse inline formatting: **bold**
+  const parseInline = (str: string): ReactNode[] => {
+    const parts: ReactNode[] = [];
+    const re = /\*\*(.+?)\*\*/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(str)) !== null) {
+      if (m.index > last) parts.push(str.slice(last, m.index));
+      parts.push(
+        <b key={m.index} style={{ fontWeight: 600, color: "#3C3489" }}>
+          {m[1]}
+        </b>
+      );
+      last = re.lastIndex;
+    }
+    if (last < str.length) parts.push(str.slice(last));
+    return parts;
+  };
+
+  // Split main text into paragraphs
+  const paragraphs = mainText.split(/\n\n+/);
+
+  return (
+    <>
+      {paragraphs.map((p, i) => (
+        <span key={i} style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? 8 : 0 }}>
+          {parseInline(p)}
+        </span>
+      ))}
+      {correctionText && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: "8px 12px",
+            background: "#FFF8E6",
+            border: "0.5px solid #E8D48A",
+            borderRadius: 8,
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: "#6B5A00",
+          }}
+        >
+          {correctionText.split("\n").map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function BloqueChat() {
   const { lang } = useLang();
-  const [msgs, setMsgs] = useState(conversacion);
+  const [msgs, setMsgs] = useState<{ role: "amico" | "user"; text: string }[]>(conversacion);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hint, setHint] = useState(false);
@@ -1405,13 +1463,26 @@ function BloqueChat() {
             systemInstruction: {
               parts: [
                 {
-                  text: `Sei un amico italiano esigente e divertente. Stai organizzando i piani per il weekend con uno studente di italiano. 
+                  text: `Sei un amico italiano esigente e divertente. Stai organizzando i piani per il weekend con uno studente di italiano.
+
+REGOLE DI RISPOSTA:
 - Rispondi SEMPRE in italiano.
 - Usa i verbi fare, andare e dire nel tuo testo.
-- Correggi gentilmente gli errori grammaticali dello studente tra parentesi quadre alla fine, es: [Correzione: "vado", non "vo"].
 - Mantieni la conversazione sul tema del weekend.
 - Fai una domanda per continuare la conversazione.
-- Risposte brevi e naturali (3-5 frasi).`,
+- Risposte brevi e naturali (3-5 frasi).
+- Metti in grassetto i verbi chiave (fare, andare, dire e le loro coniugazioni) usando **doppi asterischi**, es: "Io **faccio** una passeggiata".
+- NON usare asterischi singoli per il corsivo.
+- Se lo studente sembra confuso o non capisce qualcosa, puoi aggiungere una brevissima nota in spagnolo tra parentesi, es: "Andiamo al mare (vamos al mar)". Usalo con moderazione, solo quando serve davvero per la comprensione.
+
+CORREZIONI:
+- Se lo studente fa errori grammaticali, aggiungi le correzioni IN UN PARAGRAFO SEPARATO alla fine.
+- Usa esattamente questo formato (una correzione per riga):
+
+📝 Correzione: "forma sbagliata" → "forma corretta" — breve spiegazione.
+
+- Se non ci sono errori, scrivi: ✅ Nessun errore, ottimo lavoro!
+- Non mescolare le correzioni con il testo della conversazione.`,
                 },
               ],
             },
@@ -1509,7 +1580,7 @@ function BloqueChat() {
                   Amico italiano
                 </div>
               )}
-              {m.text}
+              {m.role === "amico" ? formatMessage(m.text) : m.text}
             </div>
           </div>
         ))}
