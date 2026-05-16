@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Corso di Italiano — fare, andare, dire</title>
+    <style>
+      :root {
+        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        --color-text-primary: #1a1a1a;
+        --color-text-secondary: #6b6b6b;
+        --color-background-primary: #ffffff;
+        --color-background-secondary: #f7f7f5;
+        --color-border-primary: #d0d0d0;
+        --color-border-secondary: #e0e0e0;
+        --color-border-tertiary: #ebebeb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --color-text-primary: #ececec;
+          --color-text-secondary: #a0a0a0;
+          --color-background-primary: #1e1e1e;
+          --color-background-secondary: #2a2a2a;
+          --color-border-primary: #555;
+          --color-border-secondary: #444;
+          --color-border-tertiary: #333;
+        }
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: var(--font-sans);
+        background: var(--color-background-secondary);
+        color: var(--color-text-primary);
+      }
+      #root { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+      .tricolore {
+        height: 4px;
+        background: linear-gradient(90deg, #009246 33.3%, #fff 33.3%, #fff 66.6%, #CE2B37 66.6%);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tricolore" aria-hidden="true"></div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
