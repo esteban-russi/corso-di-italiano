@@ -1,10 +1,17 @@
+import { useMemo } from "react";
 import { useLang, T } from "../context/LangContext";
 import { PRONOUNS } from "../config";
 import { VERB_REGISTRY } from "../data/verbs";
 import { sub } from "../utils";
 
-export default function ConjTable() {
+export default function ConjTable({ selectedVerbs }: { selectedVerbs?: string[] }) {
   const { lang } = useLang();
+  const verbs = useMemo(
+    () => selectedVerbs
+      ? VERB_REGISTRY.filter((v) => selectedVerbs.includes(v.id))
+      : VERB_REGISTRY,
+    [selectedVerbs]
+  );
   return (
     <div>
       <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 4 }}>
@@ -31,7 +38,7 @@ export default function ConjTable() {
               >
                 <T it="Pronome" es="Pronombre" />
               </th>
-              {VERB_REGISTRY.map((v) => (
+              {verbs.map((v) => (
                 <th
                   key={v.id}
                   style={{
@@ -67,7 +74,7 @@ export default function ConjTable() {
                 >
                   {p}
                 </td>
-                {VERB_REGISTRY.map((v) => (
+                {verbs.map((v) => (
                   <td
                     key={v.id}
                     style={{

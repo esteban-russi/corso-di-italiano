@@ -10,7 +10,13 @@ const initialMessages: { role: "amico" | "user"; text: string }[] = [
   },
 ];
 
-export default function Chat() {
+export default function Chat({
+  selectedVerbs,
+  onComplete,
+}: {
+  selectedVerbs: string[];
+  onComplete: () => void;
+}) {
   const { lang } = useLang();
   const [msgs, setMsgs] = useState<{ role: "amico" | "user"; text: string }[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -30,7 +36,7 @@ export default function Chat() {
         parts: [{ text: m.text }],
       }));
       const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const systemPrompt = buildChatPrompt(["fare", "andare", "dire"]);
+      const systemPrompt = buildChatPrompt(selectedVerbs);
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
         {
@@ -208,6 +214,11 @@ export default function Chat() {
             <T it="Suggerimento" es="Pista" />
           </button>
         </div>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+          <T it="Continua →" es="Continuar →" />
+        </button>
       </div>
     </div>
   );

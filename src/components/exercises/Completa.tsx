@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang, T } from "../../context/LangContext";
 import { completaItems } from "../../data/completa";
 import { shuffle, btn, row, sub } from "../../utils";
 
-export default function Completa() {
+export default function Completa({
+  selectedVerbs,
+  onError,
+  onComplete,
+}: {
+  selectedVerbs: string[];
+  onError: () => void;
+  onComplete: () => void;
+}) {
   const { lang } = useLang();
-  const [items] = useState(() => shuffle(completaItems).slice(0, 6));
-  const [answers, setAnswers] = useState<string[]>(Array(6).fill(""));
+  const filtered = useMemo(
+    () => completaItems.filter((q) => q.verbs.some((v) => selectedVerbs.includes(v))),
+    [selectedVerbs]
+  );
+  const [items] = useState(() => shuffle(filtered).slice(0, 6));
+  const [answers, setAnswers] = useState<string[]>(Array(items.length).fill(""));
   const [checked, setChecked] = useState(false);
   const [showHints, setShowHints] = useState(false);
   const update = (i: number, v: string) => {
@@ -92,7 +104,11 @@ export default function Completa() {
       <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
         {!checked ? (
           <>
-            <button onClick={() => setChecked(true)} style={btn()}>
+            <button onClick={() => {
+              setChecked(true);
+              const errorCount = answers.filter((_, i) => !correct(i)).length;
+              for (let e = 0; e < errorCount; e++) onError();
+            }} style={btn()}>
               <T it="Verifica" es="Verificar" />
             </button>
             <button
@@ -110,15 +126,20 @@ export default function Completa() {
             </button>
           </>
         ) : (
+          <>
           <button
             onClick={() => {
-              setAnswers(Array(6).fill(""));
+              setAnswers(Array(items.length).fill(""));
               setChecked(false);
             }}
             style={btn()}
           >
             <T it="Riprova" es="Intentar de nuevo" />
           </button>
+          <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+            <T it="Continua →" es="Continuar →" />
+          </button>
+          </>
         )}
         {checked && (
           <span style={{ ...sub, alignSelf: "center" }}>

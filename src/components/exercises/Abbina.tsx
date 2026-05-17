@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang, T } from "../../context/LangContext";
 import { abbinaItems } from "../../data/abbina";
 import { shuffle, btn, sub } from "../../utils";
 
-export default function Abbina() {
+export default function Abbina({
+  selectedVerbs,
+  onError,
+  onComplete,
+}: {
+  selectedVerbs: string[];
+  onError: () => void;
+  onComplete: () => void;
+}) {
   const { lang } = useLang();
+  const filtered = useMemo(
+    () => abbinaItems.filter((q) => q.verbs.some((v) => selectedVerbs.includes(v))),
+    [selectedVerbs]
+  );
   const [verbIdx, setVerbIdx] = useState(0);
-  const set = abbinaItems[verbIdx];
-  const [shuffledForms] = useState(() => abbinaItems.map((s) => shuffle(s.pairs.map((p) => p.form))));
+  const set = filtered[verbIdx];
+  const [shuffledForms] = useState(() => filtered.map((s) => shuffle(s.pairs.map((p) => p.form))));
   const forms = shuffledForms[verbIdx];
   const [matches, setMatches] = useState<Record<string, string | null>>({});
   const [selPronoun, setSelPronoun] = useState<string | null>(null);
@@ -38,7 +50,7 @@ export default function Abbina() {
     setChecked(false);
   };
   const nextVerb = () => {
-    const ni = (verbIdx + 1) % abbinaItems.length;
+    const ni = (verbIdx + 1) % filtered.length;
     setVerbIdx(ni);
     setMatches({});
     setSelPronoun(null);
@@ -54,7 +66,7 @@ export default function Abbina() {
           es={`Empareja cada pronombre con la forma correcta de "${set.verb}". Haz clic en un pronombre, luego en la forma.`}
         />{" "}
         <span style={{ fontSize: 12 }}>
-          ({verbIdx + 1}/{abbinaItems.length})
+          ({verbIdx + 1}/{filtered.length})
         </span>
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -138,7 +150,11 @@ export default function Abbina() {
       <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
         {!checked ? (
           <button
-            onClick={() => setChecked(true)}
+            onClick={() => {
+              setChecked(true);
+              const errorCount = set.pairs.filter((p) => !isCorrect(p.pronoun)).length;
+              for (let e = 0; e < errorCount; e++) onError();
+            }}
             disabled={!allMatched}
             style={{ ...btn(), opacity: allMatched ? 1 : 0.5 }}
           >
@@ -151,6 +167,9 @@ export default function Abbina() {
             </button>
             <button onClick={nextVerb} style={btn()}>
               <T it="Verbo successivo →" es="Siguiente verbo →" />
+            </button>
+            <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+              <T it="Continua →" es="Continuar →" />
             </button>
           </>
         )}

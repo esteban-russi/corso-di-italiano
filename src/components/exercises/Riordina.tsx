@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang, T } from "../../context/LangContext";
 import { riordinaItems } from "../../data/riordina";
 import { shuffle, btn, sub } from "../../utils";
 
-export default function Riordina() {
+export default function Riordina({
+  selectedVerbs,
+  onError,
+  onComplete,
+}: {
+  selectedVerbs: string[];
+  onError: () => void;
+  onComplete: () => void;
+}) {
   const { lang } = useLang();
+  const filtered = useMemo(
+    () => riordinaItems.filter((q) => q.verbs.some((v) => selectedVerbs.includes(v))),
+    [selectedVerbs]
+  );
   const [itemIdx, setItemIdx] = useState(0);
-  const item = riordinaItems[itemIdx];
+  const item = filtered[itemIdx];
   const [available, setAvailable] = useState(() => shuffle(item.words));
   const [selected, setSelected] = useState<string[]>([]);
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
@@ -24,12 +36,14 @@ export default function Riordina() {
   };
   const check = () => {
     const attempt = selected.join(" ").toLowerCase();
-    setResult(attempt === item.answer ? "correct" : "wrong");
+    const isCorrect = attempt === item.answer;
+    setResult(isCorrect ? "correct" : "wrong");
+    if (!isCorrect) onError();
   };
   const next = () => {
-    const ni = (itemIdx + 1) % riordinaItems.length;
+    const ni = (itemIdx + 1) % filtered.length;
     setItemIdx(ni);
-    setAvailable(shuffle(riordinaItems[ni].words));
+    setAvailable(shuffle(filtered[ni].words));
     setSelected([]);
     setResult(null);
   };
@@ -46,7 +60,7 @@ export default function Riordina() {
           es="Pon las palabras en el orden correcto para formar una frase."
         />{" "}
         <span style={{ fontSize: 12 }}>
-          ({itemIdx + 1}/{riordinaItems.length})
+          ({itemIdx + 1}/{filtered.length})
         </span>
       </p>
 
@@ -137,6 +151,9 @@ export default function Riordina() {
             </button>
             <button onClick={next} style={btn()}>
               <T it="Frase successiva →" es="Siguiente frase →" />
+            </button>
+            <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+              <T it="Continua →" es="Continuar →" />
             </button>
           </>
         )}

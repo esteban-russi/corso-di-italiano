@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang, T } from "../../context/LangContext";
 import { quizItems } from "../../data/quiz";
 import { shuffle, btn, row, sub } from "../../utils";
 
-export default function FlashQuiz() {
+export default function FlashQuiz({
+  selectedVerbs,
+  onError,
+  onComplete,
+}: {
+  selectedVerbs: string[];
+  onError: () => void;
+  onComplete: () => void;
+}) {
   const { lang } = useLang();
-  const [quiz, setQuiz] = useState(() => shuffle(quizItems).slice(0, 8));
-  const [answers, setAnswers] = useState<string[]>(Array(8).fill(""));
+  const filtered = useMemo(
+    () => quizItems.filter((q) => q.verbs.some((v) => selectedVerbs.includes(v))),
+    [selectedVerbs]
+  );
+  const [quiz, setQuiz] = useState(() => shuffle(filtered).slice(0, 8));
+  const [answers, setAnswers] = useState<string[]>(Array(quiz.length).fill(""));
   const [checked, setChecked] = useState(false);
   const update = (i: number, v: string) => {
     const a = [...answers];
@@ -15,10 +27,15 @@ export default function FlashQuiz() {
   };
   const correct = (i: number) =>
     answers[i].trim().toLowerCase() === quiz[i].answer;
+  const handleCheck = () => {
+    setChecked(true);
+    const errorCount = answers.filter((_, i) => !correct(i)).length;
+    for (let e = 0; e < errorCount; e++) onError();
+  };
   const reset = () => {
-    const next = shuffle(quizItems).slice(0, 8);
+    const next = shuffle(filtered).slice(0, 8);
     setQuiz(next);
-    setAnswers(Array(8).fill(""));
+    setAnswers(Array(next.length).fill(""));
     setChecked(false);
   };
   return (
@@ -89,13 +106,18 @@ export default function FlashQuiz() {
       </div>
       <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
         {!checked ? (
-          <button onClick={() => setChecked(true)} style={btn()}>
+          <button onClick={handleCheck} style={btn()}>
             <T it="Verifica risposte" es="Verificar respuestas" />
           </button>
         ) : (
-          <button onClick={reset} style={btn()}>
-            <T it="Riprova" es="Intentar de nuevo" />
-          </button>
+          <>
+            <button onClick={reset} style={btn()}>
+              <T it="Riprova" es="Intentar de nuevo" />
+            </button>
+            <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+              <T it="Continua →" es="Continuar →" />
+            </button>
+          </>
         )}
         {checked && (
           <span style={{ ...sub, alignSelf: "center" }}>

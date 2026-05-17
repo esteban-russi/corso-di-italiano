@@ -1,11 +1,23 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang, T } from "../../context/LangContext";
 import { multipleChoiceItems } from "../../data/multipleChoice";
 import { shuffle, btn, sub } from "../../utils";
 
-export default function MultipleChoice() {
+export default function MultipleChoice({
+  selectedVerbs,
+  onError,
+  onComplete,
+}: {
+  selectedVerbs: string[];
+  onError: () => void;
+  onComplete: () => void;
+}) {
   const { lang } = useLang();
-  const [items] = useState(() => shuffle(multipleChoiceItems).slice(0, 6));
+  const filtered = useMemo(
+    () => multipleChoiceItems.filter((q) => q.verbs.some((v) => selectedVerbs.includes(v))),
+    [selectedVerbs]
+  );
+  const [items] = useState(() => shuffle(filtered).slice(0, 6));
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
@@ -23,7 +35,11 @@ export default function MultipleChoice() {
   const handleConfirm = () => {
     if (!selected || answered) return;
     setAnswered(true);
-    if (selected === item.answer) setScore((s) => s + 1);
+    if (selected === item.answer) {
+      setScore((s) => s + 1);
+    } else {
+      onError();
+    }
   };
 
   const handleNext = () => {
@@ -58,6 +74,9 @@ export default function MultipleChoice() {
         </p>
         <button onClick={handleReset} style={btn()}>
           <T it="Riprova con nuove domande" es="Intentar con nuevas preguntas" />
+        </button>
+        <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none', marginTop: 10 }}>
+          <T it="Continua →" es="Continuar →" />
         </button>
       </div>
     );
