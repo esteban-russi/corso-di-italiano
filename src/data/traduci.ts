@@ -58,4 +58,178 @@ export const traduciItems: TraduciItem[] = [
     hintEs: "il professore = el profesor, nuovo = nuevo",
     verbs: ["dire"],
   },
+  // essere
+  {
+    es: "Nosotros somos estudiantes de italiano.",
+    answer: "noi siamo studenti di italiano",
+    accept: [
+      "noi siamo studenti di italiano",
+      "siamo studenti di italiano",
+    ],
+    hintIt: "studenti = estudiantes",
+    hintEs: "studenti = estudiantes",
+    verbs: ["essere"],
+  },
+  {
+    es: "Ella es muy simpática.",
+    answer: "lei è molto simpatica",
+    accept: [
+      "lei è molto simpatica",
+      "è molto simpatica",
+    ],
+    hintIt: "simpatica = simpática",
+    hintEs: "simpatica = simpática",
+    verbs: ["essere"],
+  },
+  {
+    es: "¿Ustedes están listos?",
+    answer: "voi siete pronti",
+    accept: [
+      "voi siete pronti",
+      "siete pronti",
+    ],
+    hintIt: "pronti = listos",
+    hintEs: "pronti = listos",
+    verbs: ["essere"],
+  },
+  // avere
+  {
+    es: "Yo tengo mucha hambre.",
+    answer: "io ho molta fame",
+    accept: [
+      "io ho molta fame",
+      "ho molta fame",
+    ],
+    hintIt: "fame = hambre, molta = mucha",
+    hintEs: "fame = hambre, molta = mucha",
+    verbs: ["avere"],
+  },
+  {
+    es: "Ellos tienen dos hijos.",
+    answer: "loro hanno due figli",
+    accept: [
+      "loro hanno due figli",
+      "hanno due figli",
+    ],
+    hintIt: "figli = hijos, due = dos",
+    hintEs: "figli = hijos, due = dos",
+    verbs: ["avere"],
+  },
+  {
+    es: "¿Tú tienes tiempo mañana?",
+    answer: "tu hai tempo domani",
+    accept: [
+      "tu hai tempo domani",
+      "hai tempo domani",
+    ],
+    hintIt: "tempo = tiempo, domani = mañana",
+    hintEs: "tempo = tiempo, domani = mañana",
+    verbs: ["avere"],
+  },
+  // potere
+  {
+    es: "Yo no puedo dormir.",
+    answer: "io non posso dormire",
+    accept: [
+      "io non posso dormire",
+      "non posso dormire",
+    ],
+    hintIt: "dormire = dormir",
+    hintEs: "dormire = dormir",
+    verbs: ["potere"],
+  },
+  {
+    es: "¿Podemos salir esta noche?",
+    answer: "possiamo uscire stasera",
+    accept: [
+      "possiamo uscire stasera",
+      "noi possiamo uscire stasera",
+    ],
+    hintIt: "uscire = salir, stasera = esta noche",
+    hintEs: "uscire = salir, stasera = esta noche",
+    verbs: ["potere"],
+  },
+  {
+    es: "Ellos no pueden venir.",
+    answer: "loro non possono venire",
+    accept: [
+      "loro non possono venire",
+      "non possono venire",
+    ],
+    hintIt: "venire = venir",
+    hintEs: "venire = venir",
+    verbs: ["potere"],
+  },
+  // volere
+  {
+    es: "Yo quiero aprender italiano.",
+    answer: "io voglio imparare l'italiano",
+    accept: [
+      "io voglio imparare l'italiano",
+      "voglio imparare l'italiano",
+      "io voglio imparare italiano",
+      "voglio imparare italiano",
+    ],
+    hintIt: "imparare = aprender",
+    hintEs: "imparare = aprender",
+    verbs: ["volere"],
+  },
+  {
+    es: "Ella quiere un café.",
+    answer: "lei vuole un caffè",
+    accept: [
+      "lei vuole un caffè",
+      "vuole un caffè",
+    ],
+    hintIt: "caffè = café",
+    hintEs: "caffè = café",
+    verbs: ["volere"],
+  },
+  {
+    es: "¿Qué quieres tú?",
+    answer: "cosa vuoi tu",
+    accept: [
+      "cosa vuoi tu",
+      "tu cosa vuoi",
+      "cosa vuoi",
+      "che cosa vuoi",
+    ],
+    hintIt: "cosa = qué",
+    hintEs: "cosa = qué",
+    verbs: ["volere"],
+  },
+  // dovere
+  {
+    es: "Yo debo trabajar mañana.",
+    answer: "io devo lavorare domani",
+    accept: [
+      "io devo lavorare domani",
+      "devo lavorare domani",
+    ],
+    hintIt: "lavorare = trabajar, domani = mañana",
+    hintEs: "lavorare = trabajar, domani = mañana",
+    verbs: ["dovere"],
+  },
+  {
+    es: "Nosotros debemos estudiar.",
+    answer: "noi dobbiamo studiare",
+    accept: [
+      "noi dobbiamo studiare",
+      "dobbiamo studiare",
+    ],
+    hintIt: "studiare = estudiar",
+    hintEs: "studiare = estudiar",
+    verbs: ["dovere"],
+  },
+  {
+    es: "Ellos deben pagar la cuenta.",
+    answer: "loro devono pagare il conto",
+    accept: [
+      "loro devono pagare il conto",
+      "devono pagare il conto",
+    ],
+    hintIt: "pagare = pagar, il conto = la cuenta",
+    hintEs: "pagare = pagar, il conto = la cuenta",
+    verbs: ["dovere"],
+  },
 ];
