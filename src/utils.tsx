@@ -53,12 +53,6 @@ export function shuffle<T>(arr: T[]): T[] {
 }
 
 export function formatMessage(text: string): ReactNode {
-  // Split corrections block from main text
-  const correctionRegex = /((?:📝|✅).*)/s;
-  const corrMatch = text.match(correctionRegex);
-  const mainText = corrMatch ? text.slice(0, corrMatch.index).trim() : text;
-  const correctionText = corrMatch ? corrMatch[1].trim() : null;
-
   // Parse inline formatting: **bold**
   const parseInline = (str: string): ReactNode[] => {
     const parts: ReactNode[] = [];
@@ -78,34 +72,48 @@ export function formatMessage(text: string): ReactNode {
     return parts;
   };
 
-  // Split main text into paragraphs
-  const paragraphs = mainText.split(/\n\n+/);
+  // Split into lines, classify correction vs conversation
+  const lines = text.split("\n");
+  const correctionLines: string[] = [];
+  const conversationLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("📝") || trimmed.startsWith("✅")) {
+      correctionLines.push(trimmed);
+    } else {
+      conversationLines.push(line);
+    }
+  }
+
+  const conversationText = conversationLines.join("\n").trim();
+  const paragraphs = conversationText.split(/\n\n+/).filter(Boolean);
 
   return (
     <>
+      {correctionLines.length > 0 && (
+        <div
+          style={{
+            marginBottom: 10,
+            padding: "8px 12px",
+            background: correctionLines.some((l) => l.startsWith("✅")) ? "#E8F5E9" : "#FFF8E6",
+            border: `0.5px solid ${correctionLines.some((l) => l.startsWith("✅")) ? "#A5D6A7" : "#E8D48A"}`,
+            borderRadius: 8,
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: correctionLines.some((l) => l.startsWith("✅")) ? "#2E7D32" : "#6B5A00",
+          }}
+        >
+          {correctionLines.map((line, i) => (
+            <div key={i}>{parseInline(line)}</div>
+          ))}
+        </div>
+      )}
       {paragraphs.map((p, i) => (
         <span key={i} style={{ display: "block", marginBottom: i < paragraphs.length - 1 ? 8 : 0 }}>
           {parseInline(p)}
         </span>
       ))}
-      {correctionText && (
-        <div
-          style={{
-            marginTop: 10,
-            padding: "8px 12px",
-            background: "#FFF8E6",
-            border: "0.5px solid #E8D48A",
-            borderRadius: 8,
-            fontSize: 13,
-            lineHeight: 1.6,
-            color: "#6B5A00",
-          }}
-        >
-          {correctionText.split("\n").map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
-      )}
     </>
   );
 }

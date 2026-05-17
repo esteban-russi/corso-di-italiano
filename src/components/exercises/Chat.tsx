@@ -1,14 +1,26 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang, T } from "../../context/LangContext";
 import { buildChatPrompt } from "../../prompts/chat";
 import { btn, sub, formatMessage } from "../../utils";
+import { VERB_REGISTRY } from "../../data/verbs";
 
-const initialMessages: { role: "amico" | "user"; text: string }[] = [
-  {
-    role: "amico",
-    text: "Ciao, come stai? 😊 Io sono Marco, il tuo amico italiano! Vuoi parlare di un argomento in particolare, oppure ti suggerisco io un tema? Possiamo parlare del weekend, dei viaggi, della cucina... tu cosa preferisci?",
-  },
-];
+const NATIVE_LANGUAGE = import.meta.env.VITE_NATIVE_LANGUAGE || "español";
+
+function buildGreeting(selectedVerbs: string[]): string {
+  const verbList = selectedVerbs.join(", ");
+  return `Ciao! 😊 Io sono Marco, il tuo amico italiano. Oggi pratichiamo i verbi **${verbList}**. Vuoi parlare di un argomento in particolare? Possiamo parlare del weekend, dei viaggi, della cucina... tu cosa preferisci?`;
+}
+
+function buildHintSentence(selectedVerbs: string[]): string {
+  const conj: Record<string, string> = {};
+  for (const v of VERB_REGISTRY) {
+    if (selectedVerbs.includes(v.id)) conj[v.infinitive] = v.conjugations[0]; // io form
+  }
+  const parts = Object.entries(conj).map(([inf, form]) => `${form} (${inf})`);
+  return parts.length > 0
+    ? `"Io ${parts.join(" e ")}..."`
+    : `"Prova a usare i verbi selezionati in una frase!"`;
+}
 
 export default function Chat({
   selectedVerbs,
@@ -18,7 +30,10 @@ export default function Chat({
   onComplete: () => void;
 }) {
   const { lang } = useLang();
-  const [msgs, setMsgs] = useState<{ role: "amico" | "user"; text: string }[]>(initialMessages);
+  const greeting = useMemo(() => buildGreeting(selectedVerbs), [selectedVerbs]);
+  const [msgs, setMsgs] = useState<{ role: "amico" | "user"; text: string }[]>([
+    { role: "amico", text: greeting },
+  ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hint, setHint] = useState(false);
@@ -36,7 +51,7 @@ export default function Chat({
         parts: [{ text: m.text }],
       }));
       const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const systemPrompt = buildChatPrompt(selectedVerbs);
+      const systemPrompt = buildChatPrompt(selectedVerbs, NATIVE_LANGUAGE);
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
         {
@@ -68,8 +83,8 @@ export default function Chat({
     <div>
       <p style={{ ...sub, marginBottom: 12 }}>
         <T
-          it="Rispondi in italiano usando fare, andare e dire almeno una volta. Il tuo amico ti correggerà se ci sono errori."
-          es="Responde en italiano usando fare, andare y dire al menos una vez. Tu amigo te corregirá si hay errores."
+          it={`Rispondi in italiano usando ${selectedVerbs.join(", ")} almeno una volta. Marco ti correggerà se ci sono errori.`}
+          es={`Responde en italiano usando ${selectedVerbs.join(", ")} al menos una vez. Marco te corregirá si hay errores.`}
         />
       </p>
       {hint && (
@@ -84,10 +99,7 @@ export default function Chat({
           }}
         >
           <T it="Esempio:" es="Ejemplo:" />{" "}
-          <i>
-            "Io faccio una passeggiata domani e poi vado al mare. Tu cosa ne
-            dici?"
-          </i>
+          <i>{buildHintSentence(selectedVerbs)}</i>
         </div>
       )}
       <div
