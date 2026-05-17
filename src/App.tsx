@@ -44,93 +44,101 @@ const quizItems = [
   { pronoun: "Lui/Lei", verb: "Dire", answer: "dice" },
 ];
 
-const impostorSets = [
+const multipleChoiceItems = [
   {
-    frases: [
-      {
-        id: "A",
-        text: "Oggi io vado a fare la spesa al supermercato.",
-        correct: true,
-        explainIt: null,
-        explainEs: null,
-      },
-      {
-        id: "B",
-        text: "Cosa dicono voi? Non sento niente.",
-        correct: false,
-        explainIt:
-          'La coniugazione deve concordare con il soggetto. "Voi" richiede "dite", non "dicono". Corretto: "Cosa dite voi?"',
-        explainEs:
-          'La conjugación debe concordar con el sujeto. "Voi" pide "dite", no "dicono". Correcto: "Cosa dite voi?"',
-      },
-      {
-        id: "C",
-        text: "I ragazzi fannono un corso di cucina italiana.",
-        correct: false,
-        explainIt:
-          '"Fannono" non esiste. La 3ª persona plurale di fare è "fanno". Corretto: "I ragazzi fanno un corso..."',
-        explainEs:
-          '"Fannono" no existe. La 3ª persona plural de fare es "fanno". Correcto: "I ragazzi fanno un corso..."',
-      },
-    ],
+    questionIt: "Completa: \"Io ___ al cinema stasera.\"",
+    questionEs: "Completa: \"Io ___ al cinema stasera.\"",
+    options: ["vado", "vai", "andiamo", "vanno"],
+    answer: "vado",
+    explainIt: "Il soggetto è \"io\", quindi serve la 1ª persona singolare di andare: \"vado\".",
+    explainEs: "El sujeto es \"io\", así que se necesita la 1ª persona singular de andare: \"vado\".",
   },
   {
-    frases: [
-      {
-        id: "A",
-        text: "Noi andiamo al cinema stasera con gli amici.",
-        correct: true,
-        explainIt: null,
-        explainEs: null,
-      },
-      {
-        id: "B",
-        text: "Tu facci sempre molte domande in classe.",
-        correct: false,
-        explainIt:
-          '"Facci" non è la forma corretta. La 2ª persona singolare di fare è "fai". Corretto: "Tu fai sempre molte domande."',
-        explainEs:
-          '"Facci" no es la forma correcta. La 2ª persona singular de fare es "fai". Correcto: "Tu fai sempre molte domande."',
-      },
-      {
-        id: "C",
-        text: "Io dicio la verità, lo giuro!",
-        correct: false,
-        explainIt:
-          '"Dicio" non esiste. La 1ª persona singolare di dire è "dico". Corretto: "Io dico la verità."',
-        explainEs:
-          '"Dicio" no existe. La 1ª persona singular de dire es "dico". Correcto: "Io dico la verità."',
-      },
+    questionIt: "Quale frase è corretta?",
+    questionEs: "¿Cuál frase es correcta?",
+    options: [
+      "Noi facciamo colazione insieme.",
+      "Noi faciamo colazione insieme.",
+      "Noi faccio colazione insieme.",
+      "Noi fanno colazione insieme.",
     ],
+    answer: "Noi facciamo colazione insieme.",
+    explainIt: "La 1ª persona plurale di fare è \"facciamo\" (con doppia C).",
+    explainEs: "La 1ª persona plural de fare es \"facciamo\" (con doble C).",
   },
   {
-    frases: [
-      {
-        id: "A",
-        text: "Loro vanno sempre in vacanza ad agosto.",
-        correct: false,
-        explainIt:
-          'Attenzione! Questa frase è in realtà corretta. "Vanno" è la 3ª persona plurale di andare — ma il trucco è un altro...',
-        explainEs:
-          '¡Atención! Esta frase es correcta. "Vanno" es la 3ª persona plural de andare — pero el truco es otro...',
-      },
-      {
-        id: "B",
-        text: "Che cosa dice il professore? Non capisco.",
-        correct: true,
-        explainIt: null,
-        explainEs: null,
-      },
-      {
-        id: "C",
-        text: "Noi faciamo colazione alle otto ogni mattina.",
-        correct: false,
-        explainIt:
-          '"Faciamo" non esiste. La 1ª persona plurale di fare è "facciamo" (doppia C). Corretto: "Noi facciamo colazione..."',
-        explainEs:
-          '"Faciamo" no existe. La 1ª persona plural de fare es "facciamo" (doble C). Correcto: "Noi facciamo colazione..."',
-      },
+    questionIt: "Completa: \"Cosa ___ voi di questo film?\"",
+    questionEs: "Completa: \"Cosa ___ voi di questo film?\"",
+    options: ["dicono", "dite", "dici", "diciamo"],
+    answer: "dite",
+    explainIt: "Con \"voi\" si usa la 2ª persona plurale di dire: \"dite\".",
+    explainEs: "Con \"voi\" se usa la 2ª persona plural de dire: \"dite\".",
+  },
+  {
+    questionIt: "Completa: \"Loro ___ un corso di cucina.\"",
+    questionEs: "Completa: \"Loro ___ un corso di cucina.\"",
+    options: ["faccio", "fate", "fa", "fanno"],
+    answer: "fanno",
+    explainIt: "Il soggetto è \"loro\", 3ª persona plurale di fare: \"fanno\".",
+    explainEs: "El sujeto es \"loro\", 3ª persona plural de fare: \"fanno\".",
+  },
+  {
+    questionIt: "Completa: \"Tu dove ___ domani?\"",
+    questionEs: "Completa: \"Tu dove ___ domani?\"",
+    options: ["vado", "va", "vai", "andate"],
+    answer: "vai",
+    explainIt: "Con \"tu\" si usa la 2ª persona singolare di andare: \"vai\".",
+    explainEs: "Con \"tu\" se usa la 2ª persona singular de andare: \"vai\".",
+  },
+  {
+    questionIt: "Completa: \"Lui non ___ mai niente.\"",
+    questionEs: "Completa: \"Lui non ___ mai niente.\"",
+    options: ["dico", "dici", "dice", "dicono"],
+    answer: "dice",
+    explainIt: "Con \"lui\" si usa la 3ª persona singolare di dire: \"dice\".",
+    explainEs: "Con \"lui\" se usa la 3ª persona singular de dire: \"dice\".",
+  },
+  {
+    questionIt: "Quale frase è corretta?",
+    questionEs: "¿Cuál frase es correcta?",
+    options: [
+      "Io dicio sempre la verità.",
+      "Io dico sempre la verità.",
+      "Io dice sempre la verità.",
+      "Io dicono sempre la verità.",
     ],
+    answer: "Io dico sempre la verità.",
+    explainIt: "La 1ª persona singolare di dire è \"dico\".",
+    explainEs: "La 1ª persona singular de dire es \"dico\".",
+  },
+  {
+    questionIt: "Completa: \"Noi ___ in montagna ogni inverno.\"",
+    questionEs: "Completa: \"Noi ___ in montagna ogni inverno.\"",
+    options: ["vado", "vai", "andiamo", "vanno"],
+    answer: "andiamo",
+    explainIt: "Con \"noi\" si usa la 1ª persona plurale di andare: \"andiamo\".",
+    explainEs: "Con \"noi\" se usa la 1ª persona plural de andare: \"andiamo\".",
+  },
+  {
+    questionIt: "Quale frase ha un errore?",
+    questionEs: "¿Cuál frase tiene un error?",
+    options: [
+      "Io faccio colazione alle 8.",
+      "Tu fai sempre tardi.",
+      "Lui fannono un errore.",
+      "Noi facciamo sport.",
+    ],
+    answer: "Lui fannono un errore.",
+    explainIt: "\"Fannono\" non esiste. La forma corretta è \"fa\" (3ª persona singolare).",
+    explainEs: "\"Fannono\" no existe. La forma correcta es \"fa\" (3ª persona singular).",
+  },
+  {
+    questionIt: "Completa: \"Voi ___ sport il fine settimana?\"",
+    questionEs: "Completa: \"Voi ___ sport il fine settimana?\"",
+    options: ["faccio", "fai", "fate", "fanno"],
+    answer: "fate",
+    explainIt: "Con \"voi\" si usa la 2ª persona plurale di fare: \"fate\".",
+    explainEs: "Con \"voi\" se usa la 2ª persona plural de fare: \"fate\".",
   },
 ];
 
@@ -326,7 +334,7 @@ const abbinaItems = [
 const conversacion = [
   {
     role: "amico" as const,
-    text: "Ciao! Questo fine settimana sono libero. Tu cosa fai di bello? Hai qualche idea?",
+    text: "Ciao, come stai? 😊 Io sono Marco, il tuo amico italiano! Vuoi parlare di un argomento in particolare, oppure ti suggerisco io un tema? Possiamo parlare del weekend, dei viaggi, della cucina... tu cosa preferisci?",
   },
 ];
 
@@ -654,149 +662,195 @@ function BloqueFlashQuiz() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  BLOQUE 2 — IMPOSTOR                                               */
+/*  BLOQUE 2 — MULTIPLE CHOICE                                        */
 /* ------------------------------------------------------------------ */
-function BloqueImpostor() {
+function BloqueMultipleChoice() {
   const { lang } = useLang();
-  const [setIdx, setSetIdx] = useState(0);
-  const [sel, setSel] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState(false);
-  const current = impostorSets[setIdx];
-  const nextSet = () => {
-    setSetIdx((s) => (s + 1) % impostorSets.length);
-    setSel(null);
-    setRevealed(false);
+  const [items] = useState(() => shuffle(multipleChoiceItems).slice(0, 6));
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answered, setAnswered] = useState(false);
+  const [score, setScore] = useState(0);
+  const [finished, setFinished] = useState(false);
+
+  const item = items[currentIdx];
+  const isCorrect = selected === item?.answer;
+
+  const handleSelect = (opt: string) => {
+    if (answered) return;
+    setSelected(opt);
   };
+
+  const handleConfirm = () => {
+    if (!selected || answered) return;
+    setAnswered(true);
+    if (selected === item.answer) setScore((s) => s + 1);
+  };
+
+  const handleNext = () => {
+    if (currentIdx + 1 >= items.length) {
+      setFinished(true);
+    } else {
+      setCurrentIdx((i) => i + 1);
+      setSelected(null);
+      setAnswered(false);
+    }
+  };
+
+  const handleReset = () => {
+    setCurrentIdx(0);
+    setSelected(null);
+    setAnswered(false);
+    setScore(0);
+    setFinished(false);
+  };
+
+  if (finished) {
+    return (
+      <div style={{ textAlign: "center", padding: "20px 0" }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>
+          {score === items.length ? "🎉" : score >= items.length / 2 ? "👏" : "💪"}
+        </div>
+        <h3 style={{ fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
+          <T it="Risultato" es="Resultado" />
+        </h3>
+        <p style={{ fontSize: 16, marginBottom: 16, color: "var(--color-text-secondary)" }}>
+          {score}/{items.length} <T it="risposte corrette" es="respuestas correctas" />
+        </p>
+        <button onClick={handleReset} style={btn()}>
+          <T it="Riprova con nuove domande" es="Intentar con nuevas preguntas" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <p style={{ ...sub, marginBottom: 16 }}>
         <T
-          it="Due frasi hanno un errore. Seleziona qual è l'unica corretta."
-          es="Dos frases tienen un error. Selecciona cuál es la única correcta."
+          it="Seleziona la risposta corretta per ogni domanda."
+          es="Selecciona la respuesta correcta para cada pregunta."
         />{" "}
         <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-          ({setIdx + 1}/{impostorSets.length})
+          ({currentIdx + 1}/{items.length})
         </span>
       </p>
-      <div style={{ display: "grid", gap: 10 }}>
-        {current.frases.map((f) => {
-          const isSelected = sel === f.id;
-          const wrongPick = revealed && isSelected && !f.correct;
-          const rightPick = revealed && isSelected && f.correct;
-          const wrongUnpick = revealed && !isSelected && !f.correct;
+
+      {/* Question */}
+      <div
+        style={{
+          padding: "14px 18px",
+          background: "var(--color-background-secondary)",
+          borderRadius: 10,
+          border: "0.5px solid var(--color-border-tertiary)",
+          marginBottom: 14,
+          fontSize: 15,
+          fontWeight: 500,
+        }}
+      >
+        {lang === "it" ? item.questionIt : item.questionEs}
+      </div>
+
+      {/* Options */}
+      <div style={{ display: "grid", gap: 8 }}>
+        {item.options.map((opt, i) => {
+          const isThis = selected === opt;
+          const rightAnswer = opt === item.answer;
+          let bg = "var(--color-background-primary)";
+          let borderColor = isThis ? "var(--color-border-primary)" : "var(--color-border-tertiary)";
+          if (answered) {
+            if (rightAnswer) {
+              bg = "#E1F5EE";
+              borderColor = "#1D9E75";
+            } else if (isThis && !rightAnswer) {
+              bg = "#FCEBEB";
+              borderColor = "#E24B4A";
+            }
+          } else if (isThis) {
+            bg = "var(--color-background-secondary)";
+          }
           return (
             <div
-              key={f.id}
-              onClick={() => !revealed && setSel(f.id)}
+              key={i}
+              onClick={() => handleSelect(opt)}
               style={{
-                padding: "12px 16px",
-                borderRadius: 10,
-                cursor: revealed ? "default" : "pointer",
-                border: `0.5px solid ${
-                  isSelected
-                    ? "var(--color-border-secondary)"
-                    : "var(--color-border-tertiary)"
-                }`,
-                background: rightPick
-                  ? "#E1F5EE"
-                  : wrongPick
-                  ? "#FCEBEB"
-                  : isSelected
-                  ? "var(--color-background-secondary)"
-                  : "var(--color-background-primary)",
-                transition: "background 0.2s",
+                padding: "10px 16px",
+                borderRadius: 8,
+                cursor: answered ? "default" : "pointer",
+                border: `0.5px solid ${borderColor}`,
+                background: bg,
+                fontSize: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                transition: "background 0.15s",
               }}
             >
-              <div
+              <span
                 style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  border: `2px solid ${answered && rightAnswer ? "#1D9E75" : answered && isThis ? "#E24B4A" : isThis ? "#3C3489" : "var(--color-border-secondary)"}`,
+                  background: isThis ? (answered ? (rightAnswer ? "#1D9E75" : "#E24B4A") : "#3C3489") : "transparent",
+                  flexShrink: 0,
                   display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <span
-                  style={{
-                    fontWeight: 500,
-                    fontSize: 15,
-                    minWidth: 24,
-                    marginTop: 1,
-                    color: "var(--color-text-secondary)",
-                  }}
-                >
-                  {"Frase " + f.id}
-                </span>
-                <span
-                  style={{
-                    fontSize: 14,
-                    flex: 1,
-                    fontStyle: "italic",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {f.text}
-                </span>
-                {revealed && (
-                  <span style={{ fontSize: 16 }}>
-                    {f.correct ? "✅" : wrongUnpick || wrongPick ? "❌" : ""}
-                  </span>
+                {isThis && (
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />
                 )}
-              </div>
-              {revealed && !f.correct && (
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "#993C1D",
-                    marginTop: 8,
-                    marginLeft: 34,
-                    background: "#FAECE7",
-                    borderRadius: 8,
-                    padding: "8px 12px",
-                  }}
-                >
-                  {lang === "it" ? f.explainIt : f.explainEs}
-                </p>
-              )}
-              {revealed && f.correct && (
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "#0F6E56",
-                    marginTop: 8,
-                    marginLeft: 34,
-                    background: "#E1F5EE",
-                    borderRadius: 8,
-                    padding: "8px 12px",
-                  }}
-                >
-                  <T
-                    it="Perfetto! Questa frase è corretta al 100%."
-                    es="¡Perfecto! Esta frase es 100% correcta."
-                  />
-                </p>
-              )}
+              </span>
+              <span style={{ flex: 1 }}>{opt}</span>
+              {answered && rightAnswer && <span style={{ fontSize: 14 }}>✅</span>}
+              {answered && isThis && !rightAnswer && <span style={{ fontSize: 14 }}>❌</span>}
             </div>
           );
         })}
       </div>
-      <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
-        {!revealed ? (
+
+      {/* Explanation */}
+      {answered && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "10px 14px",
+            background: isCorrect ? "#E1F5EE" : "#FAECE7",
+            borderRadius: 8,
+            fontSize: 13,
+            color: isCorrect ? "#0F6E56" : "#993C1D",
+          }}
+        >
+          {isCorrect ? (
+            <><b>✓ <T it="Esatto!" es="¡Correcto!" /></b> {lang === "it" ? item.explainIt : item.explainEs}</>
+          ) : (
+            <><b>✗ <T it="Non è corretto." es="No es correcto." /></b> {lang === "it" ? item.explainIt : item.explainEs}</>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center" }}>
+        {!answered ? (
           <button
-            onClick={() => sel && setRevealed(true)}
-            disabled={!sel}
-            style={{ ...btn(), opacity: sel ? 1 : 0.5, cursor: sel ? "pointer" : "not-allowed" }}
+            onClick={handleConfirm}
+            disabled={!selected}
+            style={{ ...btn(), opacity: selected ? 1 : 0.5, cursor: selected ? "pointer" : "not-allowed" }}
           >
-            <T it="Rivela gli impostori" es="Revelar impostores" />
+            <T it="Conferma" es="Confirmar" />
           </button>
         ) : (
-          <>
-            <button onClick={() => { setSel(null); setRevealed(false); }} style={btn()}>
-              <T it="Ricomincia" es="Reiniciar" />
-            </button>
-            <button onClick={nextSet} style={btn()}>
-              <T it="Set successivo →" es="Siguiente set →" />
-            </button>
-          </>
+          <button onClick={handleNext} style={btn()}>
+            {currentIdx + 1 >= items.length
+              ? <T it="Vedi risultato" es="Ver resultado" />
+              : <T it="Domanda successiva →" es="Siguiente pregunta →" />}
+          </button>
         )}
+        <span style={{ ...sub, marginLeft: "auto" }}>
+          {score}/{currentIdx + (answered ? 1 : 0)} <T it="corrette" es="correctas" />
+        </span>
       </div>
     </div>
   );
@@ -1463,17 +1517,26 @@ function BloqueChat() {
             systemInstruction: {
               parts: [
                 {
-                  text: `Sei un amico italiano esigente e divertente. Stai organizzando i piani per il weekend con uno studente di italiano.
+                  text: `Sei Marco, un amico italiano simpatico e paziente. Stai aiutando uno studente ispanofono a praticare i verbi fare, andare e dire in italiano.
+
+FLUSSO DELLA CONVERSAZIONE:
+- Il primo messaggio è già stato inviato ("Ciao, come stai?"). Dopo la risposta dello studente, continua in modo naturale.
+- Se lo studente non ha scelto un tema, suggeriscine uno (weekend, viaggi, cucina, sport, ecc.).
+- Mantieni la conversazione sul tema scelto ma sii flessibile.
+- IMPORTANTE: Incoraggia attivamente lo studente a usare i verbi fare, andare e dire.
+- Proponi mini-sfide durante la conversazione, come: "Come diresti in italiano: 'Yo voy al cine mañana'?" oppure "Prova a usare il verbo **fare** in una frase!"
+- Se lo studente sbaglia, NON dare subito la risposta corretta. Prima dagli un suggerimento gentile: "Quasi! Ricorda che con 'io' il verbo andare diventa..." e lascia che riprovi.
+- Solo se lo studente sbaglia di nuovo, fornisci la risposta corretta.
+- Festeggia quando lo studente scrive correttamente! Usa espressioni come "Perfetto!", "Bravo/a!", "Esattamente!"
 
 REGOLE DI RISPOSTA:
 - Rispondi SEMPRE in italiano.
-- Usa i verbi fare, andare e dire nel tuo testo.
-- Mantieni la conversazione sul tema del weekend.
-- Fai una domanda per continuare la conversazione.
+- Usa i verbi fare, andare e dire naturalmente nel tuo testo.
 - Risposte brevi e naturali (3-5 frasi).
 - Metti in grassetto i verbi chiave (fare, andare, dire e le loro coniugazioni) usando **doppi asterischi**, es: "Io **faccio** una passeggiata".
 - NON usare asterischi singoli per il corsivo.
-- Se lo studente sembra confuso o non capisce qualcosa, puoi aggiungere una brevissima nota in spagnolo tra parentesi, es: "Andiamo al mare (vamos al mar)". Usalo con moderazione, solo quando serve davvero per la comprensione.
+- Se lo studente sembra confuso o non capisce qualcosa, puoi aggiungere una brevissima nota in spagnolo tra parentesi, es: "Andiamo al mare (vamos al mar)". Usalo con moderazione.
+- Ogni 3-4 messaggi, proponi una mini-sfida con un nuovo verbo/coniugazione.
 
 CORREZIONI:
 - Se lo studente fa errori grammaticali, aggiungi le correzioni IN UN PARAGRAFO SEPARATO alla fine.
@@ -1677,9 +1740,9 @@ const blocks = [
   },
   {
     key: "b2",
-    labelIt: "Impostore",
-    labelEs: "Impostor",
-    emoji: "🧩",
+    labelIt: "Scelta multipla",
+    labelEs: "Opción múltiple",
+    emoji: "🔘",
   },
   {
     key: "b3",
@@ -1875,13 +1938,13 @@ export default function App() {
           {stage === 2 && (
             <>
               <SectionHeader
-                emoji="🧩"
-                titleIt="Blocco 2 — Chi è l'impostore?"
-                titleEs="Bloque 2 — ¿Quién es el impostor?"
-                descIt="Trova l'errore prima che diventi un'abitudine."
-                descEs="Detecta el error antes de que se vuelva hábito."
+                emoji="🔘"
+                titleIt="Blocco 2 — Scelta multipla"
+                titleEs="Bloque 2 — Opción múltiple"
+                descIt="Scegli la risposta corretta tra le opzioni."
+                descEs="Elige la respuesta correcta entre las opciones."
               />
-              <BloqueImpostor />
+              <BloqueMultipleChoice />
             </>
           )}
           {stage === 3 && (
