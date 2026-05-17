@@ -1,0 +1,68 @@
+import type { CompletaItem } from "../types";
+
+export const completaItems: CompletaItem[] = [
+  {
+    sentence: "Domani io ___ al mercato per comprare la frutta.",
+    answer: "vado",
+    verb: "andare",
+    hintIt: "verbo: andare, 1ª persona singolare",
+    hintEs: "verbo: andare, 1ª persona singular",
+    verbs: ["andare"],
+  },
+  {
+    sentence: "Che cosa ___ tu questo fine settimana?",
+    answer: "fai",
+    verb: "fare",
+    hintIt: "verbo: fare, 2ª persona singolare",
+    hintEs: "verbo: fare, 2ª persona singular",
+    verbs: ["fare"],
+  },
+  {
+    sentence: "I miei genitori ___ sempre la verità.",
+    answer: "dicono",
+    verb: "dire",
+    hintIt: "verbo: dire, 3ª persona plurale",
+    hintEs: "verbo: dire, 3ª persona plural",
+    verbs: ["dire"],
+  },
+  {
+    sentence: "Noi ___ una passeggiata ogni sera dopo cena.",
+    answer: "facciamo",
+    verb: "fare",
+    hintIt: "verbo: fare, 1ª persona plurale",
+    hintEs: "verbo: fare, 1ª persona plural",
+    verbs: ["fare"],
+  },
+  {
+    sentence: "Voi ___ in palestra il martedì e il giovedì?",
+    answer: "andate",
+    verb: "andare",
+    hintIt: "verbo: andare, 2ª persona plurale",
+    hintEs: "verbo: andare, 2ª persona plural",
+    verbs: ["andare"],
+  },
+  {
+    sentence: "Lui non ___ mai niente, è molto silenzioso.",
+    answer: "dice",
+    verb: "dire",
+    hintIt: "verbo: dire, 3ª persona singolare",
+    hintEs: "verbo: dire, 3ª persona singular",
+    verbs: ["dire"],
+  },
+  {
+    sentence: "Io ___ sempre quello che penso.",
+    answer: "dico",
+    verb: "dire",
+    hintIt: "verbo: dire, 1ª persona singolare",
+    hintEs: "verbo: dire, 1ª persona singular",
+    verbs: ["dire"],
+  },
+  {
+    sentence: "Loro ___ in montagna ogni inverno per sciare.",
+    answer: "vanno",
+    verb: "andare",
+    hintIt: "verbo: andare, 3ª persona plurale",
+    hintEs: "verbo: andare, 3ª persona plural",
+    verbs: ["andare"],
+  },
+];
