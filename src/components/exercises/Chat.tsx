@@ -229,7 +229,7 @@ export default function Chat({
       </div>
       <div style={{ marginTop: 14 }}>
         <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
-          <T it="Continua →" es="Continuar →" />
+          <T it="Finalizza sessione ✓" es="Finalizar sesión ✓" />
         </button>
       </div>
     </div>

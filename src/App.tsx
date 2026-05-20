@@ -64,6 +64,7 @@ function AppContent() {
   const { lang } = useLang();
   const [stage, setStage] = useState<AppStage>({ kind: "selector" });
   const [showConjTable, setShowConjTable] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const handleStart = useCallback((verbs: string[], exercises: ExerciseType[]) => {
     setStage({ kind: "lesson", verbs, exercises, step: 0, errors: 0, startTime: Date.now() });
@@ -150,12 +151,13 @@ function AppContent() {
           </div>
 
           {/* Controls */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-            <button onClick={handleRestart} style={{ ...btn(), fontSize: 12, padding: "5px 12px", color: "var(--color-text-secondary)" }}>
-              <T it="← Esci dalla lezione" es="← Salir de la lección" />
-            </button>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
             <button onClick={() => setShowConjTable((s) => !s)} style={{ ...btn(), fontSize: 12, padding: "5px 12px" }}>
               📋 <T it={showConjTable ? "Nascondi tabella" : "Mostra tabella"} es={showConjTable ? "Ocultar tabla" : "Mostrar tabla"} />
+            </button>
+            <span style={{ flex: 1 }} />
+            <button onClick={() => setShowExitConfirm(true)} style={{ ...btn(), fontSize: 12, padding: "6px 14px", background: "#CE2B37", color: "#fff", border: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+              ✕ <T it="Esci dalla lezione" es="Salir de la lección" />
             </button>
           </div>
 
@@ -165,6 +167,29 @@ function AppContent() {
             </div>
           )}
         </>
+      )}
+
+      {/* Exit confirmation overlay */}
+      {showExitConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "var(--color-background-primary)", borderRadius: 12, padding: "28px 32px", maxWidth: 360, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: "var(--color-text-primary)" }}>
+              <T it="Vuoi uscire dalla lezione?" es="¿Quieres salir de la lección?" />
+            </div>
+            <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 20 }}>
+              <T it="Il tuo progresso non sarà salvato." es="Tu progreso no se guardará." />
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={() => setShowExitConfirm(false)} style={{ ...btn(), padding: "8px 20px", fontSize: 14 }}>
+                <T it="Annulla" es="Cancelar" />
+              </button>
+              <button onClick={() => { setShowExitConfirm(false); handleRestart(); }} style={{ ...btn(), padding: "8px 20px", fontSize: 14, background: "#CE2B37", color: "#fff", border: "none", fontWeight: 600 }}>
+                <T it="Esci" es="Salir" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Content */}
