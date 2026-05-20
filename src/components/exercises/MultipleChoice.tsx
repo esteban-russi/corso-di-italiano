@@ -72,12 +72,14 @@ export default function MultipleChoice({
         <p style={{ fontSize: 16, marginBottom: 16, color: "var(--color-text-secondary)" }}>
           {score}/{items.length} <T it="risposte corrette" es="respuestas correctas" />
         </p>
-        <button onClick={handleReset} style={btn()}>
-          <T it="Riprova con nuove domande" es="Intentar con nuevas preguntas" />
-        </button>
-        <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none', marginTop: 10 }}>
-          <T it="Continua →" es="Continuar →" />
-        </button>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <button onClick={handleReset} className="btn-secondary" style={btn()}>
+            <T it="Riprova con nuove domande" es="Intentar con nuevas preguntas" />
+          </button>
+          <button onClick={onComplete} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
+            <T it="Continua →" es="Continuar →" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -149,8 +151,8 @@ export default function MultipleChoice({
                   width: 22,
                   height: 22,
                   borderRadius: "50%",
-                  border: `2px solid ${answered && rightAnswer ? "#1D9E75" : answered && isThis ? "#E24B4A" : isThis ? "#3C3489" : "var(--color-border-secondary)"}`,
-                  background: isThis ? (answered ? (rightAnswer ? "#1D9E75" : "#E24B4A") : "#3C3489") : "transparent",
+                  border: `2px solid ${answered && rightAnswer ? "#1D9E75" : answered && isThis ? "#E24B4A" : isThis ? "var(--color-primary)" : "var(--color-border-secondary)"}`,
+                  background: isThis ? (answered ? (rightAnswer ? "#1D9E75" : "#E24B4A") : "var(--color-primary)") : "transparent",
                   flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
@@ -195,12 +197,13 @@ export default function MultipleChoice({
           <button
             onClick={handleConfirm}
             disabled={!selected}
-            style={{ ...btn(), opacity: selected ? 1 : 0.5, cursor: selected ? "pointer" : "not-allowed" }}
+            className="btn-primary"
+            style={{ ...btn(), fontWeight: 600 }}
           >
             <T it="Conferma" es="Confirmar" />
           </button>
         ) : (
-          <button onClick={handleNext} style={btn()}>
+          <button onClick={handleNext} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
             {currentIdx + 1 >= items.length
               ? <T it="Vedi risultato" es="Ver resultado" />
               : <T it="Domanda successiva →" es="Siguiente pregunta →" />}

@@ -109,14 +109,15 @@ export default function Riordina({
             key={i}
             onClick={() => pick(w, i)}
             style={{
-              padding: "5px 14px",
+              padding: "6px 14px",
               borderRadius: 8,
-              background: "#EEEDFE",
-              color: "#3C3489",
-              border: "0.5px solid #d5d3f0",
+              background: "var(--color-primary-softer)",
+              color: "var(--color-primary-hover)",
+              border: "1px solid var(--color-primary-soft)",
               cursor: "pointer",
               fontSize: 14,
               fontWeight: 500,
+              transition: "background 0.15s ease, transform 0.08s ease",
             }}
           >
             {w}
@@ -141,18 +142,18 @@ export default function Riordina({
 
       <div style={{ display: "flex", gap: 10 }}>
         {!result ? (
-          <button onClick={check} disabled={selected.length === 0} style={{ ...btn(), opacity: selected.length ? 1 : 0.5 }}>
+          <button onClick={check} disabled={selected.length === 0} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
             <T it="Verifica" es="Verificar" />
           </button>
         ) : (
           <>
-            <button onClick={reset} style={btn()}>
+            <button onClick={reset} className="btn-secondary" style={btn()}>
               <T it="Ricomincia" es="Reiniciar" />
             </button>
-            <button onClick={next} style={btn()}>
+            <button onClick={next} className="btn-secondary" style={btn()}>
               <T it="Frase successiva →" es="Siguiente frase →" />
             </button>
-            <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+            <button onClick={onComplete} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
               <T it="Continua →" es="Continuar →" />
             </button>
           </>

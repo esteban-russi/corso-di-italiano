@@ -7,32 +7,73 @@
     <style>
       :root {
         --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        --color-text-primary: #1a1a1a;
-        --color-text-secondary: #6b6b6b;
+        --color-text-primary: #0f172a;
+        --color-text-secondary: #64748b;
         --color-background-primary: #ffffff;
-        --color-background-secondary: #f7f7f5;
-        --color-border-primary: #d0d0d0;
-        --color-border-secondary: #e0e0e0;
-        --color-border-tertiary: #ebebeb;
+        --color-background-secondary: #f1f6fb;
+        --color-background-tint: #eff6ff;
+        --color-border-primary: #c7d2e0;
+        --color-border-secondary: #dbe4ee;
+        --color-border-tertiary: #e8eef5;
+
+        --color-primary: #2563eb;
+        --color-primary-hover: #1d4ed8;
+        --color-primary-active: #1e40af;
+        --color-primary-soft: #dbeafe;
+        --color-primary-softer: #eff6ff;
+        --color-primary-ring: rgba(37, 99, 235, 0.35);
+
+        --color-success: #059669;
+        --color-success-soft: #d1fae5;
+        --color-danger: #dc2626;
+        --color-danger-hover: #b91c1c;
+        --color-danger-soft: #fee2e2;
+
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+        --shadow-md: 0 4px 14px rgba(37, 99, 235, 0.12);
+        --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.18);
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --color-text-primary: #ececec;
-          --color-text-secondary: #a0a0a0;
-          --color-background-primary: #1e1e1e;
-          --color-background-secondary: #2a2a2a;
-          --color-border-primary: #555;
-          --color-border-secondary: #444;
-          --color-border-tertiary: #333;
+          --color-text-primary: #e2e8f0;
+          --color-text-secondary: #94a3b8;
+          --color-background-primary: #111827;
+          --color-background-secondary: #0b1220;
+          --color-background-tint: #15213a;
+          --color-border-primary: #334155;
+          --color-border-secondary: #283449;
+          --color-border-tertiary: #1f2a3d;
+
+          --color-primary: #60a5fa;
+          --color-primary-hover: #3b82f6;
+          --color-primary-active: #2563eb;
+          --color-primary-soft: #1e3a8a;
+          --color-primary-softer: #172554;
+          --color-primary-ring: rgba(96, 165, 250, 0.4);
+
+          --color-success: #10b981;
+          --color-success-soft: #064e3b;
+          --color-danger: #f87171;
+          --color-danger-hover: #ef4444;
+          --color-danger-soft: #7f1d1d;
+
+          --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+          --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+          --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.55);
         }
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         font-family: var(--font-sans);
-        background: var(--color-background-secondary);
+        background:
+          radial-gradient(1200px 600px at 10% -10%, var(--color-primary-softer), transparent 60%),
+          radial-gradient(900px 500px at 110% 10%, var(--color-background-tint), transparent 55%),
+          var(--color-background-secondary);
         color: var(--color-text-primary);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
       }
-      #root { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+      #root { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
       .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
       .tricolore {
         height: 4px;
@@ -43,6 +84,101 @@
         right: 0;
         z-index: 100;
       }
+
+      /* Friendly buttons --------------------------------------------------- */
+      button {
+        font-family: inherit;
+        transition:
+          background-color 0.18s ease,
+          border-color 0.18s ease,
+          color 0.18s ease,
+          box-shadow 0.18s ease,
+          transform 0.08s ease;
+      }
+      button:focus { outline: none; }
+      button:focus-visible {
+        box-shadow: 0 0 0 3px var(--color-primary-ring);
+      }
+      button:not(:disabled):active { transform: translateY(1px); }
+
+      .btn-primary {
+        background: var(--color-primary) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: var(--shadow-md);
+      }
+      .btn-primary:not(:disabled):hover {
+        background: var(--color-primary-hover) !important;
+        box-shadow: 0 8px 22px rgba(37, 99, 235, 0.28);
+      }
+      .btn-primary:not(:disabled):active {
+        background: var(--color-primary-active) !important;
+      }
+      .btn-primary:disabled {
+        background: var(--color-border-secondary) !important;
+        color: var(--color-text-secondary) !important;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: var(--color-background-primary) !important;
+        color: var(--color-text-primary) !important;
+        border: 1px solid var(--color-border-secondary) !important;
+      }
+      .btn-secondary:not(:disabled):hover {
+        background: var(--color-primary-softer) !important;
+        border-color: var(--color-primary) !important;
+        color: var(--color-primary-hover) !important;
+      }
+
+      .btn-ghost {
+        background: transparent !important;
+        color: var(--color-text-secondary) !important;
+        border: 1px solid transparent !important;
+      }
+      .btn-ghost:not(:disabled):hover {
+        background: var(--color-primary-softer) !important;
+        color: var(--color-primary-hover) !important;
+      }
+
+      .btn-danger {
+        background: transparent !important;
+        color: var(--color-danger) !important;
+        border: 1px solid var(--color-danger-soft) !important;
+      }
+      .btn-danger:not(:disabled):hover {
+        background: var(--color-danger-soft) !important;
+        color: var(--color-danger-hover) !important;
+        border-color: var(--color-danger) !important;
+      }
+      .btn-danger-solid {
+        background: var(--color-danger) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: var(--shadow-sm);
+      }
+      .btn-danger-solid:not(:disabled):hover {
+        background: var(--color-danger-hover) !important;
+      }
+
+      /* Inputs ------------------------------------------------------------- */
+      textarea, input[type="text"] {
+        font-family: inherit;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      }
+      textarea:focus, input[type="text"]:focus {
+        outline: none;
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 3px var(--color-primary-ring);
+      }
+
+      /* Subtle fade-in for screen transitions */
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in { animation: fade-in 0.28s ease both; }
     </style>
   </head>
   <body>

@@ -42,9 +42,13 @@ function renderExercise(
   const props = { selectedVerbs: verbs, onError, onComplete };
   switch (exerciseKey) {
     case "intro": return (
-      <div key={`intro-${step}`}>
+      <div key={`intro-${step}`} className="fade-in">
         <ConjTable selectedVerbs={verbs} />
-        <button onClick={onComplete} style={{ ...btn(), marginTop: 16, background: '#009246', color: '#fff', border: 'none' }}>
+        <button
+          onClick={onComplete}
+          className="btn-primary"
+          style={{ ...btn(), marginTop: 16, padding: "11px 22px", fontWeight: 600 }}
+        >
           <T it="Continua →" es="Continuar →" />
         </button>
       </div>
@@ -95,27 +99,61 @@ function AppContent() {
     <div style={{ padding: "1rem 0", fontFamily: "var(--font-sans)" }}>
       <h2 className="sr-only">Classe interattiva di italiano</h2>
 
-      {/* Italian flag title bar */}
+      {/* Header bar — friendly blue with a tricolor accent */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          marginBottom: 20,
-          padding: "12px 16px",
-          background: "var(--color-background-primary)",
-          borderRadius: 10,
-          border: "0.5px solid var(--color-border-tertiary)",
+          gap: 14,
+          marginBottom: 22,
+          padding: "14px 18px",
+          background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-primary) 70%)",
+          borderRadius: 14,
+          border: "1px solid var(--color-border-tertiary)",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
-        <div style={{ display: "flex", gap: 0, borderRadius: 4, overflow: "hidden", flexShrink: 0 }}>
-          <span style={{ width: 8, height: 24, background: "#009246" }} />
-          <span style={{ width: 8, height: 24, background: "#fff" }} />
-          <span style={{ width: 8, height: 24, background: "#CE2B37" }} />
+        <div
+          aria-hidden="true"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            background: "var(--color-primary)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            flexShrink: 0,
+            boxShadow: "var(--shadow-md)",
+          }}
+        >
+          🇮🇹
         </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)" }}>Corso di Italiano</div>
-          <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              color: "var(--color-text-primary)",
+              letterSpacing: "-0.01em",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            Corso di Italiano
+            <span
+              aria-hidden="true"
+              style={{ display: "inline-flex", borderRadius: 3, overflow: "hidden" }}
+            >
+              <span style={{ width: 5, height: 12, background: "#009246" }} />
+              <span style={{ width: 5, height: 12, background: "#fff", border: "0.5px solid var(--color-border-tertiary)" }} />
+              <span style={{ width: 5, height: 12, background: "#CE2B37" }} />
+            </span>
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>
             <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />
           </div>
         </div>
@@ -139,25 +177,43 @@ function AppContent() {
 
           {/* Progress bar */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 4 }}>
-              <span>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--color-text-secondary)", marginBottom: 6 }}>
+              <span style={{ fontWeight: 500 }}>
                 <T it={`Esercizio ${stage.step + 1} di ${stage.exercises.length}`} es={`Ejercicio ${stage.step + 1} de ${stage.exercises.length}`} />
               </span>
-              <span>{stage.errors} <T it="errori" es="errores" /></span>
+              <span style={{ color: stage.errors > 0 ? "var(--color-danger)" : "var(--color-text-secondary)" }}>
+                {stage.errors} <T it="errori" es="errores" />
+              </span>
             </div>
-            <div style={{ height: 4, background: "var(--color-border-tertiary)", borderRadius: 2, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${((stage.step + 1) / stage.exercises.length) * 100}%`, background: "#009246", borderRadius: 2, transition: "width 0.3s" }} />
+            <div style={{ height: 6, background: "var(--color-border-tertiary)", borderRadius: 999, overflow: "hidden" }}>
+              <div
+                style={{
+                  height: "100%",
+                  width: `${((stage.step + 1) / stage.exercises.length) * 100}%`,
+                  background: "linear-gradient(90deg, var(--color-primary), var(--color-primary-hover))",
+                  borderRadius: 999,
+                  transition: "width 0.4s cubic-bezier(.4,0,.2,1)",
+                }}
+              />
             </div>
           </div>
 
           {/* Controls */}
           <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
-            <button onClick={() => setShowConjTable((s) => !s)} style={{ ...btn(), fontSize: 12, padding: "5px 12px" }}>
+            <button
+              onClick={() => setShowConjTable((s) => !s)}
+              className="btn-secondary"
+              style={{ ...btn(), fontSize: 12.5, padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
               📋 <T it={showConjTable ? "Nascondi tabella" : "Mostra tabella"} es={showConjTable ? "Ocultar tabla" : "Mostrar tabla"} />
             </button>
             <span style={{ flex: 1 }} />
-            <button onClick={() => setShowExitConfirm(true)} style={{ ...btn(), fontSize: 12, padding: "6px 14px", background: "#CE2B37", color: "#fff", border: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-              ✕ <T it="Esci dalla lezione" es="Salir de la lección" />
+            <button
+              onClick={() => setShowExitConfirm(true)}
+              className="btn-danger"
+              style={{ ...btn(), fontSize: 12.5, padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              ✕ <T it="Esci" es="Salir" />
             </button>
           </div>
 
@@ -171,20 +227,67 @@ function AppContent() {
 
       {/* Exit confirmation overlay */}
       {showExitConfirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "var(--color-background-primary)", borderRadius: 12, padding: "28px 32px", maxWidth: 360, width: "90%", textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: "var(--color-text-primary)" }}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.55)",
+            backdropFilter: "blur(2px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="fade-in"
+            style={{
+              background: "var(--color-background-primary)",
+              borderRadius: 16,
+              padding: "30px 32px 26px",
+              maxWidth: 380,
+              width: "90%",
+              textAlign: "center",
+              boxShadow: "var(--shadow-lg)",
+              border: "1px solid var(--color-border-tertiary)",
+            }}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background: "var(--color-primary-soft)",
+                color: "var(--color-primary-hover)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 28,
+                margin: "0 auto 14px",
+              }}
+            >
+              👋
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: "var(--color-text-primary)" }}>
               <T it="Vuoi uscire dalla lezione?" es="¿Quieres salir de la lección?" />
             </div>
-            <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 20 }}>
+            <div style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 22, lineHeight: 1.5 }}>
               <T it="Il tuo progresso non sarà salvato." es="Tu progreso no se guardará." />
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button onClick={() => setShowExitConfirm(false)} style={{ ...btn(), padding: "8px 20px", fontSize: 14 }}>
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="btn-secondary"
+                style={{ ...btn(), padding: "10px 22px", fontSize: 14, fontWeight: 500 }}
+              >
                 <T it="Annulla" es="Cancelar" />
               </button>
-              <button onClick={() => { setShowExitConfirm(false); handleRestart(); }} style={{ ...btn(), padding: "8px 20px", fontSize: 14, background: "#CE2B37", color: "#fff", border: "none", fontWeight: 600 }}>
+              <button
+                onClick={() => { setShowExitConfirm(false); handleRestart(); }}
+                className="btn-danger-solid"
+                style={{ ...btn(), padding: "10px 22px", fontSize: 14, fontWeight: 600 }}
+              >
                 <T it="Esci" es="Salir" />
               </button>
             </div>
@@ -193,7 +296,7 @@ function AppContent() {
       )}
 
       {/* Content */}
-      <div style={card}>
+      <div key={stage.kind} className="fade-in" style={card}>
         {stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
 
         {stage.kind === "lesson" && (() => {

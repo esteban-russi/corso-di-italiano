@@ -15,26 +15,25 @@ export default function LangToggle() {
       onTouchEnd={hide}
       title="Mantén presionado para ver en español"
       style={{
-        padding: "4px 12px",
-        borderRadius: 20,
-        border: `0.5px solid ${
-          lang === "es"
-            ? "var(--color-border-primary)"
-            : "var(--color-border-secondary)"
-        }`,
+        padding: "6px 14px",
+        borderRadius: 999,
+        border: `1px solid ${lang === "es" ? "var(--color-primary)" : "var(--color-border-secondary)"}`,
         background:
           lang === "es"
-            ? "var(--color-background-secondary)"
+            ? "var(--color-primary-softer)"
             : "var(--color-background-primary)",
         cursor: "pointer",
         fontSize: 12,
-        fontWeight: 500,
-        color: "var(--color-text-secondary)",
+        fontWeight: 600,
+        color: lang === "es" ? "var(--color-primary-hover)" : "var(--color-text-secondary)",
         userSelect: "none",
         WebkitUserSelect: "none",
-        transition: "all 0.15s",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
       }}
     >
+      <span aria-hidden="true">🌐</span>
       {lang === "es" ? "Español" : "Traducción"}
     </button>
   );

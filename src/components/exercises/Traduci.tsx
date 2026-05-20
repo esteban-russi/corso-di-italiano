@@ -106,21 +106,15 @@ export default function Traduci({
               setChecked(true);
               const errorCount = answers.filter((_, i) => !correct(i)).length;
               for (let e = 0; e < errorCount; e++) onError();
-            }} style={btn()}>
+            }} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
               <T it="Verifica" es="Verificar" />
             </button>
             <button
               onClick={() => setShowHints((h) => !h)}
-              style={{
-                ...btn(),
-                fontSize: 12,
-                padding: "6px 16px",
-                color: "var(--color-text-secondary)",
-                border: "0.5px solid var(--color-border-tertiary)",
-                background: "transparent",
-              }}
+              className="btn-ghost"
+              style={{ ...btn(), fontSize: 12.5, padding: "6px 14px" }}
             >
-              <T it={showHints ? "Nascondi" : "Suggerimenti"} es={showHints ? "Ocultar" : "Pistas"} />
+              💡 <T it={showHints ? "Nascondi" : "Suggerimenti"} es={showHints ? "Ocultar" : "Pistas"} />
             </button>
           </>
         ) : (
@@ -130,11 +124,12 @@ export default function Traduci({
               setAnswers(Array(items.length).fill(""));
               setChecked(false);
             }}
+            className="btn-secondary"
             style={btn()}
           >
             <T it="Riprova" es="Intentar de nuevo" />
           </button>
-          <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+          <button onClick={onComplete} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
             <T it="Continua →" es="Continuar →" />
           </button>
           </>

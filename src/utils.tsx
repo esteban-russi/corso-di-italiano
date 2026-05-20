@@ -5,24 +5,25 @@ import React from "react";
 /*  STYLE HELPERS                                                      */
 /* ------------------------------------------------------------------ */
 export const btn = (active = false): React.CSSProperties => ({
-  padding: "8px 20px",
-  borderRadius: 8,
-  border: `0.5px solid var(--color-border-secondary)`,
+  padding: "9px 18px",
+  borderRadius: 10,
+  border: `1px solid ${active ? "var(--color-primary)" : "var(--color-border-secondary)"}`,
   background: active
-    ? "var(--color-background-secondary)"
+    ? "var(--color-primary-softer)"
     : "var(--color-background-primary)",
   cursor: "pointer",
   fontWeight: 500,
   fontSize: 14,
-  color: "var(--color-text-primary)",
+  color: active ? "var(--color-primary-hover)" : "var(--color-text-primary)",
 });
 
 export const card: React.CSSProperties = {
   background: "var(--color-background-primary)",
-  border: "0.5px solid var(--color-border-tertiary)",
-  borderTop: "3px solid #009246",
-  borderRadius: 12,
-  padding: "20px 20px",
+  border: "1px solid var(--color-border-tertiary)",
+  borderTop: "3px solid var(--color-primary)",
+  borderRadius: 14,
+  padding: "22px 22px",
+  boxShadow: "var(--shadow-sm)",
 };
 
 export const row: React.CSSProperties = {
@@ -32,7 +33,7 @@ export const row: React.CSSProperties = {
   padding: "10px 14px",
   background: "var(--color-background-secondary)",
   borderRadius: 10,
-  border: "0.5px solid var(--color-border-tertiary)",
+  border: "1px solid var(--color-border-tertiary)",
 };
 
 export const sub: React.CSSProperties = {
@@ -62,7 +63,7 @@ export function formatMessage(text: string): ReactNode {
     while ((m = re.exec(str)) !== null) {
       if (m.index > last) parts.push(str.slice(last, m.index));
       parts.push(
-        <b key={m.index} style={{ fontWeight: 600, color: "#3C3489" }}>
+        <b key={m.index} style={{ fontWeight: 600, color: "var(--color-primary-hover)" }}>
           {m[1]}
         </b>
       );

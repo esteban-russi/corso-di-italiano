@@ -106,15 +106,15 @@ export default function FlashQuiz({
       </div>
       <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
         {!checked ? (
-          <button onClick={handleCheck} style={btn()}>
+          <button onClick={handleCheck} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
             <T it="Verifica risposte" es="Verificar respuestas" />
           </button>
         ) : (
           <>
-            <button onClick={reset} style={btn()}>
+            <button onClick={reset} className="btn-secondary" style={btn()}>
               <T it="Riprova" es="Intentar de nuevo" />
             </button>
-            <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+            <button onClick={onComplete} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
               <T it="Continua →" es="Continuar →" />
             </button>
           </>

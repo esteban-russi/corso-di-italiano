@@ -81,25 +81,44 @@ export default function Chat({
 
   return (
     <div>
-      <p style={{ ...sub, marginBottom: 12 }}>
-        <T
-          it={`Rispondi in italiano usando ${selectedVerbs.join(", ")} almeno una volta. Marco ti correggerà se ci sono errori.`}
-          es={`Responde en italiano usando ${selectedVerbs.join(", ")} al menos una vez. Marco te corregirá si hay errores.`}
-        />
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
+        <p style={{ ...sub, flex: 1, margin: 0 }}>
+          <T
+            it={`Rispondi in italiano usando ${selectedVerbs.join(", ")} almeno una volta. Marco ti correggerà se ci sono errori.`}
+            es={`Responde en italiano usando ${selectedVerbs.join(", ")} al menos una vez. Marco te corregirá si hay errores.`}
+          />
+        </p>
+        <button
+          onClick={() => setHint((h) => !h)}
+          className="btn-ghost"
+          style={{ ...btn(), padding: "5px 10px", fontSize: 12, flexShrink: 0 }}
+        >
+          💡 <T it={hint ? "Nascondi" : "Suggerimento"} es={hint ? "Ocultar" : "Pista"} />
+        </button>
+      </div>
       {hint && (
         <div
+          className="fade-in"
           style={{
             fontSize: 13,
-            background: "#E6F1FB",
-            color: "#185FA5",
-            borderRadius: 8,
+            background: "var(--color-primary-softer)",
+            color: "var(--color-primary-hover)",
+            border: "1px solid var(--color-primary-soft)",
+            borderRadius: 10,
             padding: "10px 14px",
             marginBottom: 12,
+            display: "flex",
+            gap: 8,
+            alignItems: "flex-start",
           }}
         >
-          <T it="Esempio:" es="Ejemplo:" />{" "}
-          <i>{buildHintSentence(selectedVerbs)}</i>
+          <span aria-hidden="true">💡</span>
+          <div>
+            <strong style={{ fontWeight: 600 }}>
+              <T it="Esempio:" es="Ejemplo:" />
+            </strong>{" "}
+            <i>{buildHintSentence(selectedVerbs)}</i>
+          </div>
         </div>
       )}
       <div
@@ -129,15 +148,20 @@ export default function Chat({
                 padding: "10px 14px",
                 borderRadius:
                   m.role === "amico"
-                    ? "4px 12px 12px 12px"
-                    : "12px 4px 12px 12px",
+                    ? "4px 14px 14px 14px"
+                    : "14px 4px 14px 14px",
                 background:
                   m.role === "amico"
                     ? "var(--color-background-secondary)"
-                    : "#EEEDFE",
+                    : "var(--color-primary)",
+                border:
+                  m.role === "amico"
+                    ? "1px solid var(--color-border-tertiary)"
+                    : "none",
                 fontSize: 14,
                 lineHeight: 1.6,
-                color: "var(--color-text-primary)",
+                color: m.role === "amico" ? "var(--color-text-primary)" : "#fff",
+                boxShadow: m.role === "user" ? "var(--shadow-sm)" : "none",
               }}
             >
               {m.role === "amico" && (
@@ -174,7 +198,18 @@ export default function Chat({
           </div>
         )}
       </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "stretch",
+          padding: 6,
+          border: "1px solid var(--color-border-secondary)",
+          borderRadius: 14,
+          background: "var(--color-background-primary)",
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -184,52 +219,79 @@ export default function Chat({
               send();
             }
           }}
-          placeholder="Scrivi in italiano..."
+          placeholder="Scrivi in italiano... (Invio per inviare)"
           rows={2}
           style={{
             flex: 1,
             fontSize: 14,
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "0.5px solid var(--color-border-secondary)",
-            background: "var(--color-background-primary)",
+            padding: "8px 10px",
+            borderRadius: 10,
+            border: "none",
+            background: "transparent",
             color: "var(--color-text-primary)",
             resize: "none",
             outline: "none",
             lineHeight: 1.5,
+            minHeight: 56,
           }}
         />
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <button
-            onClick={send}
-            disabled={!input.trim() || loading}
-            style={{
-              ...btn(),
-              padding: "8px 16px",
-              opacity: input.trim() && !loading ? 1 : 0.5,
-            }}
-          >
-            Invia
-          </button>
-          <button
-            onClick={() => setHint((h) => !h)}
-            style={{
-              padding: "6px 16px",
-              borderRadius: 8,
-              border: "0.5px solid var(--color-border-tertiary)",
-              background: "transparent",
-              cursor: "pointer",
-              fontSize: 12,
-              color: "var(--color-text-secondary)",
-            }}
-          >
-            <T it="Suggerimento" es="Pista" />
-          </button>
-        </div>
+        <button
+          onClick={send}
+          disabled={!input.trim() || loading}
+          className="btn-primary"
+          aria-label="Invia messaggio"
+          style={{
+            ...btn(),
+            padding: "0 22px",
+            minWidth: 110,
+            fontWeight: 700,
+            fontSize: 15,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            borderRadius: 10,
+            alignSelf: "stretch",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 16 }}>➤</span>
+          <T it="Invia" es="Enviar" />
+        </button>
       </div>
-      <div style={{ marginTop: 14 }}>
-        <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
-          <T it="Finalizza sessione ✓" es="Finalizar sesión ✓" />
+
+      {/* End-of-session footer — visually separated from the send action */}
+      <div
+        style={{
+          marginTop: 28,
+          paddingTop: 18,
+          borderTop: "1px dashed var(--color-border-secondary)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 8,
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)" }}>
+          <T
+            it="Quando ti senti pronto, termina la conversazione."
+            es="Cuando te sientas listo, termina la conversación."
+          />
+        </div>
+        <button
+          onClick={onComplete}
+          className="btn-secondary"
+          style={{
+            ...btn(),
+            padding: "8px 18px",
+            fontSize: 13,
+            fontWeight: 500,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          ✓ <T it="Termina la sessione" es="Terminar la sesión" />
         </button>
       </div>
     </div>

@@ -156,19 +156,20 @@ export default function Abbina({
               for (let e = 0; e < errorCount; e++) onError();
             }}
             disabled={!allMatched}
-            style={{ ...btn(), opacity: allMatched ? 1 : 0.5 }}
+            className="btn-primary"
+            style={{ ...btn(), fontWeight: 600 }}
           >
             <T it="Verifica" es="Verificar" />
           </button>
         ) : (
           <>
-            <button onClick={reset} style={btn()}>
+            <button onClick={reset} className="btn-secondary" style={btn()}>
               <T it="Ricomincia" es="Reiniciar" />
             </button>
-            <button onClick={nextVerb} style={btn()}>
+            <button onClick={nextVerb} className="btn-secondary" style={btn()}>
               <T it="Verbo successivo →" es="Siguiente verbo →" />
             </button>
-            <button onClick={onComplete} style={{ ...btn(), background: '#009246', color: '#fff', border: 'none' }}>
+            <button onClick={onComplete} className="btn-primary" style={{ ...btn(), fontWeight: 600 }}>
               <T it="Continua →" es="Continuar →" />
             </button>
           </>
