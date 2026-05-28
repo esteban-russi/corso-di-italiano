@@ -103,10 +103,16 @@ function AppContent() {
     });
   }, []);
 
-  const handleRestart = useCallback(() => {
+  const handleResetLesson = useCallback(() => {
     setStage({ kind: "selector" });
     setShowConjTable(false);
   }, []);
+
+  const handleReturnHome = useCallback(() => {
+    handleResetLesson();
+    setSection("home");
+    setShowExitConfirm(false);
+  }, [handleResetLesson]);
 
   return (
     <div style={{ padding: "1rem 0", fontFamily: "var(--font-sans)" }}>
@@ -173,7 +179,7 @@ function AppContent() {
         <span style={{ flex: 1 }} />
         {showHomeButton && (
           <button
-            onClick={() => setSection("home")}
+            onClick={handleReturnHome}
             className="btn-secondary"
             style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}
           >
@@ -306,7 +312,7 @@ function AppContent() {
                 <T it="Annulla" es="Cancelar" />
               </button>
               <button
-                onClick={() => { setShowExitConfirm(false); handleRestart(); }}
+                onClick={handleReturnHome}
                 className="btn-danger-solid"
                 style={{ ...btn(), padding: "10px 22px", fontSize: 14, fontWeight: 600 }}
               >
@@ -335,7 +341,7 @@ function AppContent() {
           );
         })()}
 
-        {section === "verbs-learning" && stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onRestart={handleRestart} />}
+        {section === "verbs-learning" && stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={handleReturnHome} />}
 
         {section === "conversation" && (
           <SectionPlaceholder
@@ -344,7 +350,7 @@ function AppContent() {
             titleEs="Conversación"
             bodyIt="Questa sezione non è ancora stata pubblicata. Qui arriveranno esercizi e scenari di dialogo guidato."
             bodyEs="Esta sección aún no ha sido publicada. Aquí llegarán ejercicios y escenarios de diálogo guiado."
-            onBack={() => setSection("home")}
+            onBack={handleReturnHome}
           />
         )}
 
@@ -355,7 +361,7 @@ function AppContent() {
             titleEs="Ajustes"
             bodyIt="Questa area non è ancora disponibile. In seguito conterrà preferenze e opzioni dell'app."
             bodyEs="Esta área aún no está disponible. Más adelante contendrá preferencias y opciones de la app."
-            onBack={() => setSection("home")}
+            onBack={handleReturnHome}
           />
         )}
       </div>
