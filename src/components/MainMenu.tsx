@@ -1,5 +1,4 @@
 import { T } from "../context/LangContext";
-import { btn } from "../utils";
 
 type MainMenuProps = {
   onSelectSection: (section: "verbs-learning" | "conversation" | "settings") => void;
@@ -11,6 +10,8 @@ function MenuCard({
   titleEs,
   bodyIt,
   bodyEs,
+  accent,
+  badge,
   onClick,
 }: {
   emoji: string;
@@ -18,59 +19,79 @@ function MenuCard({
   titleEs: string;
   bodyIt: string;
   bodyEs: string;
+  accent: string;
+  badge?: { it: string; es: string };
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="btn-secondary"
       style={{
-        ...btn(),
         display: "grid",
-        gridTemplateColumns: "48px 1fr auto",
+        gridTemplateColumns: "52px 1fr auto",
         alignItems: "center",
         gap: 16,
         width: "100%",
-        padding: "18px 20px",
+        padding: "20px 22px",
         textAlign: "left",
+        background: "var(--color-background-primary)",
         border: "1px solid var(--color-border-tertiary)",
+        borderLeft: `4px solid ${accent}`,
         borderRadius: 14,
+        cursor: "pointer",
+        fontFamily: "inherit",
       }}
     >
       <span
         aria-hidden="true"
         style={{
-          width: 48,
-          height: 48,
+          width: 52,
+          height: 52,
           borderRadius: 14,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 24,
-          background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-secondary))",
+          fontSize: 26,
+          background: `${accent}18`,
         }}
       >
         {emoji}
       </span>
       <span>
-        <span style={{ display: "block", fontSize: 17, fontWeight: 700, marginBottom: 4, color: "var(--color-text-primary)" }}>
-          <T it={titleIt} es={titleEs} />
+        <span style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)" }}>
+            <T it={titleIt} es={titleEs} />
+          </span>
+          {badge && (
+            <span style={{
+              fontSize: 10.5,
+              fontWeight: 600,
+              padding: "2px 8px",
+              borderRadius: 999,
+              background: "var(--color-border-tertiary)",
+              color: "var(--color-text-secondary)",
+              letterSpacing: "0.02em",
+              textTransform: "uppercase",
+            }}>
+              <T it={badge.it} es={badge.es} />
+            </span>
+          )}
         </span>
         <span style={{ display: "block", fontSize: 13, lineHeight: 1.5, color: "var(--color-text-secondary)" }}>
           <T it={bodyIt} es={bodyEs} />
         </span>
       </span>
-      <span aria-hidden="true" style={{ fontSize: 24, color: "var(--color-text-secondary)" }}>→</span>
+      <span aria-hidden="true" style={{ fontSize: 20, color: "var(--color-text-secondary)", opacity: 0.5 }}>›</span>
     </button>
   );
 }
 
 export default function MainMenu({ onSelectSection }: MainMenuProps) {
   return (
-    <div style={{ display: "grid", gap: 14 }}>
-      <div>
-        <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.02em", marginBottom: 6 }}>
-          <T it="Menu principale" es="Menú principal" />
+    <div style={{ display: "grid", gap: 12 }}>
+      <div style={{ marginBottom: 4 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.02em", marginBottom: 4 }}>
+          <T it="Benvenuto!" es="¡Bienvenido!" />
         </div>
         <div style={{ fontSize: 14, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
           <T
@@ -84,8 +105,9 @@ export default function MainMenu({ onSelectSection }: MainMenuProps) {
         emoji="📚"
         titleIt="Verbi"
         titleEs="Verbos"
-        bodyIt="Apri l'app di apprendimento attuale."
-        bodyEs="Abre la app de aprendizaje actual."
+        accent="#2563eb"
+        bodyIt="Esercizi interattivi sui verbi irregolari al presente."
+        bodyEs="Ejercicios interactivos de verbos irregulares en presente."
         onClick={() => onSelectSection("verbs-learning")}
       />
 
@@ -93,8 +115,10 @@ export default function MainMenu({ onSelectSection }: MainMenuProps) {
         emoji="💬"
         titleIt="Conversazione"
         titleEs="Conversación"
-        bodyIt="Anteprima della sezione conversazione, non ancora pubblicata."
-        bodyEs="Vista previa de la sección de conversación, aún no publicada."
+        accent="#8b5cf6"
+        badge={{ it: "Prossimamente", es: "Próximamente" }}
+        bodyIt="Scenari di dialogo guidato con feedback."
+        bodyEs="Escenarios de diálogo guiado con feedback."
         onClick={() => onSelectSection("conversation")}
       />
 
@@ -102,8 +126,9 @@ export default function MainMenu({ onSelectSection }: MainMenuProps) {
         emoji="⚙️"
         titleIt="Impostazioni"
         titleEs="Ajustes"
-        bodyIt="Anteprima dell'area impostazioni, non ancora pubblicata."
-        bodyEs="Vista previa del área de ajustes, aún no publicada."
+        accent="#64748b"
+        bodyIt="Tema, lingua e preferenze dell'app."
+        bodyEs="Tema, idioma y preferencias de la app."
         onClick={() => onSelectSection("settings")}
       />
     </div>
