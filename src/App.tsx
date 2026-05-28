@@ -6,6 +6,7 @@ import type { ExerciseType } from "./types";
 import LangToggle from "./components/LangToggle";
 import MainMenu from "./components/MainMenu";
 import SectionHeader from "./components/SectionHeader";
+import SectionPlaceholder from "./components/SectionPlaceholder";
 import ConjTable from "./components/ConjTable";
 import VerbSelector from "./components/VerbSelector";
 import LessonSummary from "./components/LessonSummary";
@@ -301,7 +302,7 @@ function AppContent() {
 
       {/* Content */}
       <div key={stage.kind} className="fade-in" style={card}>
-        {section === "home" && <MainMenu onSelectVerbs={() => setSection("verbs-learning")} />}
+        {section === "home" && <MainMenu onSelectSection={setSection} />}
 
         {section === "verbs-learning" && stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
 
@@ -318,6 +319,28 @@ function AppContent() {
         })()}
 
         {section === "verbs-learning" && stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onRestart={handleRestart} />}
+
+        {section === "conversation" && (
+          <SectionPlaceholder
+            emoji="💬"
+            titleIt="Conversazione"
+            titleEs="Conversación"
+            bodyIt="Questa sezione non è ancora stata pubblicata. Qui arriveranno esercizi e scenari di dialogo guidato."
+            bodyEs="Esta sección aún no ha sido publicada. Aquí llegarán ejercicios y escenarios de diálogo guiado."
+            onBack={() => setSection("home")}
+          />
+        )}
+
+        {section === "settings" && (
+          <SectionPlaceholder
+            emoji="⚙️"
+            titleIt="Impostazioni"
+            titleEs="Ajustes"
+            bodyIt="Questa area non è ancora disponibile. In seguito conterrà preferenze e opzioni dell'app."
+            bodyEs="Esta área aún no está disponible. Más adelante contendrá preferencias y opciones de la app."
+            onBack={() => setSection("home")}
+          />
+        )}
       </div>
     </div>
   );
