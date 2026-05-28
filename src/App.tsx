@@ -8,6 +8,7 @@ import LangToggle from "./components/LangToggle";
 import MainMenu from "./components/MainMenu";
 import SectionHeader from "./components/SectionHeader";
 import SectionPlaceholder from "./components/SectionPlaceholder";
+import Settings from "./components/Settings";
 import ConjTable from "./components/ConjTable";
 import VerbSelector from "./components/VerbSelector";
 import LessonSummary from "./components/LessonSummary";
@@ -79,7 +80,7 @@ function AppContent() {
     home: <T it="Scegli una sezione del corso" es="Elige una sección del curso" />,
     "verbs-learning": <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />,
     conversation: <T it="Conversazione guidata — anteprima" es="Conversación guiada — vista previa" />,
-    settings: <T it="Personalizzazione dell'app — anteprima" es="Personalización de la app — vista previa" />,
+    settings: <T it="Personalizzazione dell'app" es="Personalización de la app" />,
   }[section];
 
   const showHomeButton = section !== "home" && !(section === "verbs-learning" && stage.kind === "lesson");
@@ -356,14 +357,7 @@ function AppContent() {
         )}
 
         {section === "settings" && (
-          <SectionPlaceholder
-            emoji="⚙️"
-            titleIt="Impostazioni"
-            titleEs="Ajustes"
-            bodyIt="Questa area non è ancora disponibile. In seguito conterrà preferenze e opzioni dell'app."
-            bodyEs="Esta área aún no está disponible. Más adelante contendrá preferencias y opciones de la app."
-            onBack={handleReturnHome}
-          />
+          <Settings onBack={handleReturnHome} />
         )}
       </div>
     </div>
