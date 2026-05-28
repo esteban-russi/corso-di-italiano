@@ -69,11 +69,19 @@ function renderExercise(
 }
 
 function AppContent() {
-  const { lang } = useLang();
   const [section, setSection] = useState<AppSection>("home");
   const [stage, setStage] = useState<AppStage>({ kind: "selector" });
   const [showConjTable, setShowConjTable] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const sectionSubtitle = {
+    home: <T it="Scegli una sezione del corso" es="Elige una sección del curso" />,
+    "verbs-learning": <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />,
+    conversation: <T it="Conversazione guidata — anteprima" es="Conversación guiada — vista previa" />,
+    settings: <T it="Personalizzazione dell'app — anteprima" es="Personalización de la app — vista previa" />,
+  }[section];
+
+  const showHomeButton = section !== "home" && !(section === "verbs-learning" && stage.kind === "lesson");
 
   const handleStart = useCallback((verbs: string[], exercises: ExerciseType[]) => {
     setStage({ kind: "lesson", verbs, exercises, step: 0, errors: 0, startTime: Date.now() });
@@ -159,15 +167,24 @@ function AppContent() {
             </span>
           </div>
           <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>
-            <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />
+            {sectionSubtitle}
           </div>
         </div>
         <span style={{ flex: 1 }} />
+        {showHomeButton && (
+          <button
+            onClick={() => setSection("home")}
+            className="btn-secondary"
+            style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}
+          >
+            <T it="Menu" es="Menú" />
+          </button>
+        )}
         <LangToggle />
       </div>
 
       {/* Lesson in progress: verb badges + progress bar + controls */}
-      {stage.kind === "lesson" && (
+      {section === "verbs-learning" && stage.kind === "lesson" && (
         <>
           <div style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             {stage.verbs.map((v) => {
@@ -301,7 +318,7 @@ function AppContent() {
       )}
 
       {/* Content */}
-      <div key={stage.kind} className="fade-in" style={card}>
+      <div key={`${section}-${stage.kind}`} className="fade-in" style={card}>
         {section === "home" && <MainMenu onSelectSection={setSection} />}
 
         {section === "verbs-learning" && stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
