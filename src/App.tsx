@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { LangProvider, useLang, T } from "./context/LangContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { VERB_BADGE_COLORS } from "./config";
 import { btn, card } from "./utils";
 import type { ExerciseType } from "./types";
@@ -371,8 +372,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <LangProvider>
-      <AppContent />
-    </LangProvider>
+    <ThemeProvider>
+      <LangProvider>
+        <AppContent />
+      </LangProvider>
+    </ThemeProvider>
   );
 }
