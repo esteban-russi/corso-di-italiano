@@ -1,10 +1,14 @@
 import { useState, useCallback } from "react";
 import { LangProvider, useLang, T } from "./context/LangContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { VERB_BADGE_COLORS } from "./config";
 import { btn, card } from "./utils";
 import type { ExerciseType } from "./types";
 import LangToggle from "./components/LangToggle";
+import MainMenu from "./components/MainMenu";
 import SectionHeader from "./components/SectionHeader";
+import SectionPlaceholder from "./components/SectionPlaceholder";
+import Settings from "./components/Settings";
 import ConjTable from "./components/ConjTable";
 import VerbSelector from "./components/VerbSelector";
 import LessonSummary from "./components/LessonSummary";
@@ -20,6 +24,8 @@ type AppStage =
   | { kind: "selector" }
   | { kind: "lesson"; verbs: string[]; exercises: ExerciseType[]; step: number; errors: number; startTime: number }
   | { kind: "summary"; errors: number; startTime: number };
+
+type AppSection = "home" | "verbs-learning" | "conversation" | "settings";
 
 const exerciseMeta: Record<string, { emoji: string; titleIt: string; titleEs: string; descIt: string; descEs: string }> = {
   "intro": { emoji: "📋", titleIt: "Tabella di coniugazione", titleEs: "Tabla de conjugación", descIt: "Studia le coniugazioni dei verbi selezionati.", descEs: "Estudia las conjugaciones de los verbos seleccionados." },
@@ -65,10 +71,19 @@ function renderExercise(
 }
 
 function AppContent() {
-  const { lang } = useLang();
+  const [section, setSection] = useState<AppSection>("home");
   const [stage, setStage] = useState<AppStage>({ kind: "selector" });
   const [showConjTable, setShowConjTable] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const sectionSubtitle = {
+    home: <T it="Scegli una sezione del corso" es="Elige una sección del curso" />,
+    "verbs-learning": <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />,
+    conversation: <T it="Conversazione guidata — anteprima" es="Conversación guiada — vista previa" />,
+    settings: <T it="Personalizzazione dell'app" es="Personalización de la app" />,
+  }[section];
+
+  const showHomeButton = section !== "home" && !(section === "verbs-learning" && stage.kind === "lesson");
 
   const handleStart = useCallback((verbs: string[], exercises: ExerciseType[]) => {
     setStage({ kind: "lesson", verbs, exercises, step: 0, errors: 0, startTime: Date.now() });
@@ -90,10 +105,16 @@ function AppContent() {
     });
   }, []);
 
-  const handleRestart = useCallback(() => {
+  const handleResetLesson = useCallback(() => {
     setStage({ kind: "selector" });
     setShowConjTable(false);
   }, []);
+
+  const handleReturnHome = useCallback(() => {
+    handleResetLesson();
+    setSection("home");
+    setShowExitConfirm(false);
+  }, [handleResetLesson]);
 
   return (
     <div style={{ padding: "1rem 0", fontFamily: "var(--font-sans)" }}>
@@ -154,15 +175,24 @@ function AppContent() {
             </span>
           </div>
           <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>
-            <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />
+            {sectionSubtitle}
           </div>
         </div>
         <span style={{ flex: 1 }} />
+        {showHomeButton && (
+          <button
+            onClick={handleReturnHome}
+            className="btn-secondary"
+            style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}
+          >
+            <T it="Menu" es="Menú" />
+          </button>
+        )}
         <LangToggle />
       </div>
 
       {/* Lesson in progress: verb badges + progress bar + controls */}
-      {stage.kind === "lesson" && (
+      {section === "verbs-learning" && stage.kind === "lesson" && (
         <>
           <div style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             {stage.verbs.map((v) => {
@@ -284,7 +314,7 @@ function AppContent() {
                 <T it="Annulla" es="Cancelar" />
               </button>
               <button
-                onClick={() => { setShowExitConfirm(false); handleRestart(); }}
+                onClick={handleReturnHome}
                 className="btn-danger-solid"
                 style={{ ...btn(), padding: "10px 22px", fontSize: 14, fontWeight: 600 }}
               >
@@ -296,10 +326,12 @@ function AppContent() {
       )}
 
       {/* Content */}
-      <div key={stage.kind} className="fade-in" style={card}>
-        {stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
+      <div key={`${section}-${stage.kind}`} className="fade-in" style={card}>
+        {section === "home" && <MainMenu onSelectSection={setSection} />}
 
-        {stage.kind === "lesson" && (() => {
+        {section === "verbs-learning" && stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
+
+        {section === "verbs-learning" && stage.kind === "lesson" && (() => {
           const exerciseKey = stage.exercises[stage.step];
           const meta = exerciseMeta[exerciseKey];
           if (!meta) return null;
@@ -311,7 +343,22 @@ function AppContent() {
           );
         })()}
 
-        {stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onRestart={handleRestart} />}
+        {section === "verbs-learning" && stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={handleReturnHome} />}
+
+        {section === "conversation" && (
+          <SectionPlaceholder
+            emoji="💬"
+            titleIt="Conversazione"
+            titleEs="Conversación"
+            bodyIt="Questa sezione non è ancora stata pubblicata. Qui arriveranno esercizi e scenari di dialogo guidato."
+            bodyEs="Esta sección aún no ha sido publicada. Aquí llegarán ejercicios y escenarios de diálogo guiado."
+            onBack={handleReturnHome}
+          />
+        )}
+
+        {section === "settings" && (
+          <Settings onBack={handleReturnHome} />
+        )}
       </div>
     </div>
   );
@@ -319,8 +366,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <LangProvider>
-      <AppContent />
-    </LangProvider>
+    <ThemeProvider>
+      <LangProvider>
+        <AppContent />
+      </LangProvider>
+    </ThemeProvider>
   );
 }

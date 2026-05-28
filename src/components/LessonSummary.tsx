@@ -4,11 +4,11 @@ import { btn } from "../utils";
 export default function LessonSummary({
   errors,
   startTime,
-  onRestart,
+  onReturnHome,
 }: {
   errors: number;
   startTime: number;
-  onRestart: () => void;
+  onReturnHome: () => void;
 }) {
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
   const mm = Math.floor(elapsed / 60);
@@ -99,7 +99,7 @@ export default function LessonSummary({
       )}
 
       <button
-        onClick={onRestart}
+        onClick={onReturnHome}
         className="btn-primary"
         style={{
           ...btn(),
@@ -109,7 +109,7 @@ export default function LessonSummary({
           letterSpacing: "0.01em",
         }}
       >
-        <T it="Nuova lezione →" es="Nueva lección →" />
+        <T it="Torna al menu →" es="Volver al menú →" />
       </button>
     </div>
   );
