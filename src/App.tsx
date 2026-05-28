@@ -21,6 +21,8 @@ type AppStage =
   | { kind: "lesson"; verbs: string[]; exercises: ExerciseType[]; step: number; errors: number; startTime: number }
   | { kind: "summary"; errors: number; startTime: number };
 
+type AppSection = "home" | "verbs-learning" | "conversation" | "settings";
+
 const exerciseMeta: Record<string, { emoji: string; titleIt: string; titleEs: string; descIt: string; descEs: string }> = {
   "intro": { emoji: "📋", titleIt: "Tabella di coniugazione", titleEs: "Tabla de conjugación", descIt: "Studia le coniugazioni dei verbi selezionati.", descEs: "Estudia las conjugaciones de los verbos seleccionados." },
   "flash-quiz": { emoji: "⚡", titleIt: "Flash-Quiz", titleEs: "Flash-Quiz", descIt: "Flash-quiz di coniugazione. Risposte rapide.", descEs: "Flash-quiz de conjugación. Respuestas rápidas." },
@@ -66,6 +68,7 @@ function renderExercise(
 
 function AppContent() {
   const { lang } = useLang();
+  const [section, setSection] = useState<AppSection>("home");
   const [stage, setStage] = useState<AppStage>({ kind: "selector" });
   const [showConjTable, setShowConjTable] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -297,9 +300,67 @@ function AppContent() {
 
       {/* Content */}
       <div key={stage.kind} className="fade-in" style={card}>
-        {stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
+        {section === "home" && (
+          <div style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.02em", marginBottom: 6 }}>
+                <T it="Menu principale" es="Menú principal" />
+              </div>
+              <div style={{ fontSize: 14, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+                <T
+                  it="Scegli la sezione del corso che vuoi aprire."
+                  es="Elige la sección del curso que quieres abrir."
+                />
+              </div>
+            </div>
 
-        {stage.kind === "lesson" && (() => {
+            <button
+              onClick={() => setSection("verbs-learning")}
+              className="btn-primary"
+              style={{
+                ...btn(),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 16,
+                padding: "18px 20px",
+                textAlign: "left",
+              }}
+            >
+              <span>
+                <span style={{ display: "block", fontSize: 17, fontWeight: 700, marginBottom: 4 }}>
+                  <T it="Verbi" es="Verbos" />
+                </span>
+                <span style={{ display: "block", fontSize: 13, opacity: 0.9, fontWeight: 500 }}>
+                  <T it="Apri l'app di apprendimento attuale" es="Abre la app de aprendizaje actual" />
+                </span>
+              </span>
+              <span aria-hidden="true" style={{ fontSize: 24 }}>→</span>
+            </button>
+
+            <div style={{ padding: "16px 18px", borderRadius: 14, border: "1px solid var(--color-border-tertiary)", background: "var(--color-background-secondary)" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 4 }}>
+                <T it="Conversazione" es="Conversación" />
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+                <T it="Sezione prevista ma non ancora disponibile." es="Sección prevista pero aún no disponible." />
+              </div>
+            </div>
+
+            <div style={{ padding: "16px 18px", borderRadius: 14, border: "1px solid var(--color-border-tertiary)", background: "var(--color-background-secondary)" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 4 }}>
+                <T it="Impostazioni" es="Ajustes" />
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+                <T it="Sezione prevista ma non ancora disponibile." es="Sección prevista pero aún no disponible." />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {section === "verbs-learning" && stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
+
+        {section === "verbs-learning" && stage.kind === "lesson" && (() => {
           const exerciseKey = stage.exercises[stage.step];
           const meta = exerciseMeta[exerciseKey];
           if (!meta) return null;
@@ -311,7 +372,7 @@ function AppContent() {
           );
         })()}
 
-        {stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onRestart={handleRestart} />}
+        {section === "verbs-learning" && stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onRestart={handleRestart} />}
       </div>
     </div>
   );
