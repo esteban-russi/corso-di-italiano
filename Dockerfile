@@ -1,4 +1,4 @@
-# Stage 1: Build
+# Stage 1: Build the SPA
 FROM node:22-alpine AS build
 WORKDIR /app
 
@@ -6,17 +6,15 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
-
-ARG VITE_GEMINI_API_KEY
-ARG VITE_NATIVE_LANGUAGE=español
-
 RUN npm run build
 
-# Stage 2: Serve
-FROM nginx:stable-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Stage 2: Serve static build + /api proxy via the dependency-free Node server.
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/dist ./dist
+COPY server ./server
+COPY package.json ./
 
 EXPOSE 8080
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server/index.mjs"]
