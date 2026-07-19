@@ -1,5 +1,13 @@
 import { T } from "../context/LangContext";
+import { useStreak } from "../context/StreakContext";
 import { btn } from "../utils";
+
+const MILESTONES: Record<number, { it: string; es: string }> = {
+  7: { it: "🍕 Una settimana di pizza!", es: "🍕 ¡Una semana de pizza!" },
+  30: { it: "🍕🍕 Un mese di pizza!", es: "🍕🍕 ¡Un mes de pizza!" },
+  100: { it: "🍕🍕🍕 Cento pizze!", es: "🍕🍕🍕 ¡Cien pizzas!" },
+  365: { it: "🍕🍕🍕🍕 Un anno di pizza!", es: "🍕🍕🍕🍕 ¡Un año de pizza!" },
+};
 
 export default function LessonSummary({
   errors,
@@ -10,12 +18,15 @@ export default function LessonSummary({
   startTime: number;
   onReturnHome: () => void;
 }) {
+  const { currentStreak, newDayRecorded } = useStreak();
+
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
   const mm = Math.floor(elapsed / 60);
   const ss = elapsed % 60;
   const timeStr = `${mm}:${ss.toString().padStart(2, "0")}`;
 
   const emoji = errors === 0 ? "🎉" : errors <= 3 ? "👏" : "💪";
+  const milestone = MILESTONES[currentStreak];
 
   return (
     <div className="fade-in" style={{ textAlign: "center", padding: "32px 20px 16px" }}>
@@ -90,7 +101,46 @@ export default function LessonSummary({
             <T it="tempo" es="tiempo" />
           </div>
         </div>
+        <div
+          style={{
+            flex: "0 1 150px",
+            padding: "16px 14px",
+            borderRadius: 12,
+            background: "var(--color-primary-softer)",
+            border: "1px solid var(--color-primary-soft)",
+          }}
+        >
+          <div style={{ fontSize: 30, fontWeight: 700, color: "var(--color-primary-hover)", lineHeight: 1 }}>
+            🍕 {currentStreak}
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 6, fontWeight: 500 }}>
+            <T it="serie" es="racha" />
+          </div>
+          {newDayRecorded && (
+            <div style={{ fontSize: 11.5, color: "var(--color-success)", marginTop: 4, fontWeight: 600 }}>
+              <T it="Nuovo giorno!" es="¡Nuevo día!" />
+            </div>
+          )}
+        </div>
       </div>
+
+      {milestone && (
+        <p
+          className="fade-in"
+          style={{
+            fontSize: 15,
+            fontWeight: 700,
+            color: "var(--color-primary-hover)",
+            marginBottom: 22,
+            padding: "12px 16px",
+            background: "var(--color-primary-softer)",
+            border: "1px solid var(--color-primary-soft)",
+            borderRadius: 12,
+          }}
+        >
+          <T it={milestone.it} es={milestone.es} />
+        </p>
+      )}
 
       {errors === 0 && (
         <p style={{ fontSize: 14, color: "var(--color-success)", marginBottom: 22, fontWeight: 500 }}>
