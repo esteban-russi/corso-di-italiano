@@ -65,10 +65,10 @@ export default function StreakBadge() {
           }}
         >
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text-primary)", marginBottom: 4 }}>
-            🍕 {currentStreak} <T it="giorni" es="días" />
+            🍕 {currentStreak} <T en="days" es="días" />
           </div>
           <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginBottom: 10 }}>
-            <T it={`Record: ${longestStreak} giorni`} es={`Récord: ${longestStreak} días`} />
+            <T en={`Record: ${longestStreak} days`} es={`Récord: ${longestStreak} días`} />
           </div>
           <div
             style={{
@@ -80,9 +80,9 @@ export default function StreakBadge() {
             }}
           >
             {currentStreak > 0 ? (
-              <T it="Continua così!" es="¡Sigue así!" />
+              <T en="Keep it up!" es="¡Sigue así!" />
             ) : (
-              <T it="Inizia oggi!" es="¡Empieza hoy!" />
+              <T en="Start today!" es="¡Empieza hoy!" />
             )}
           </div>
         </div>
