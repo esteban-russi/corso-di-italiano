@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { LangProvider, useLang, T } from "./context/LangContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { StreakProvider, useStreak } from "./context/StreakContext";
 import { VERB_BADGE_COLORS } from "./config";
 import { btn, card } from "./utils";
 import type { ExerciseType } from "./types";
@@ -9,6 +10,7 @@ import MainMenu from "./components/MainMenu";
 import SectionHeader from "./components/SectionHeader";
 import SectionPlaceholder from "./components/SectionPlaceholder";
 import Settings from "./components/Settings";
+import StreakBadge from "./components/StreakBadge";
 import ConjTable from "./components/ConjTable";
 import VerbSelector from "./components/VerbSelector";
 import LessonSummary from "./components/LessonSummary";
@@ -75,6 +77,12 @@ function AppContent() {
   const [stage, setStage] = useState<AppStage>({ kind: "selector" });
   const [showConjTable, setShowConjTable] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const { recordActivity } = useStreak();
+
+  // Synchronous mirror of stage so handleNextStep can detect lesson completion
+  // and record the streak from the event handler (not inside a state updater).
+  const stageRef = useRef(stage);
+  stageRef.current = stage;
 
   const sectionSubtitle = {
     home: <T it="Scegli una sezione del corso" es="Elige una sección del curso" />,
@@ -95,15 +103,20 @@ function AppContent() {
   }, []);
 
   const handleNextStep = useCallback(() => {
-    setStage((s) => {
-      if (s.kind !== "lesson") return s;
-      const nextStep = s.step + 1;
-      if (nextStep >= s.exercises.length) {
-        return { kind: "summary", errors: s.errors, startTime: s.startTime };
+    // Completing all exercises in a lesson counts as today's activity.
+    const s = stageRef.current;
+    if (s.kind === "lesson" && s.step + 1 >= s.exercises.length) {
+      recordActivity();
+    }
+    setStage((prev) => {
+      if (prev.kind !== "lesson") return prev;
+      const nextStep = prev.step + 1;
+      if (nextStep >= prev.exercises.length) {
+        return { kind: "summary", errors: prev.errors, startTime: prev.startTime };
       }
-      return { ...s, step: nextStep };
+      return { ...prev, step: nextStep };
     });
-  }, []);
+  }, [recordActivity]);
 
   const handleResetLesson = useCallback(() => {
     setStage({ kind: "selector" });
@@ -179,6 +192,7 @@ function AppContent() {
           </div>
         </div>
         <span style={{ flex: 1 }} />
+        <StreakBadge />
         {showHomeButton && (
           <button
             onClick={handleReturnHome}
@@ -368,7 +382,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <LangProvider>
-        <AppContent />
+        <StreakProvider>
+          <AppContent />
+        </StreakProvider>
       </LangProvider>
     </ThemeProvider>
   );
