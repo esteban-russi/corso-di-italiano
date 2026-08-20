@@ -64,11 +64,16 @@ export default function Conversation() {
 
   const started = msgs.length > 0;
 
-  // Persist and auto-scroll.
   useEffect(() => {
     localStorage.setItem(STORE, JSON.stringify({ msgs, verbs: focusVerbs, topic }));
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, focusVerbs, topic]);
+
+  // Follow the bottom of the thread. Revealing a translation makes a message
+  // taller, so it has to scroll too or the text it just revealed sits clipped
+  // below the fold — which defeats the point of asking for it.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [msgs, shownTranslations]);
 
   const greeting = (): string => {
     const list = focusVerbs.map((v) => getVerb(v)?.infinitive).filter(Boolean).join(", ");

@@ -7,7 +7,8 @@
     "dev": "vite",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc && tsc -p tsconfig.server.json",
+    "e2e": "vite build && playwright test",
+    "typecheck": "tsc && tsc -p tsconfig.server.json && tsc -p tsconfig.e2e.json",
     "check": "npm run typecheck && npm run test",
     "build": "npm run check && vite build",
     "preview": "vite preview",
@@ -19,6 +20,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
