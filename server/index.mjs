@@ -6,7 +6,7 @@ import { readFile, stat } from "node:fs/promises";
 import { join, extname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
-import { buildChatPrompt } from "./prompt.mjs";
+import { buildChatPrompt, splitTranslation } from "./prompt.mjs";
 import { clientKey, createRateLimiter, limiterConfigFromEnv } from "./rateLimit.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -56,9 +56,7 @@ async function handleChat(req, res) {
     });
   }
   if (!GEMINI_API_KEY) {
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ reply: "(Server missing GEMINI_API_KEY)" }));
-    return;
+    return refuse(res, 500, "server_misconfigured", "(Server missing GEMINI_API_KEY)");
   }
   try {
     const body = JSON.parse((await readBody(req)) || "{}");
@@ -81,12 +79,15 @@ async function handleChat(req, res) {
     );
     /** @type {{ candidates?: { content?: { parts?: { text?: string }[] } }[] }} */
     const data = await r.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "...";
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "...";
+    // The translation rides along in the same turn and is split off here, so
+    // the marker never reaches the thread (docs/01-conversation-core.md).
+    const { reply, translation } = splitTranslation(raw);
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ reply }));
+    res.end(JSON.stringify({ reply: reply || "...", translation }));
   } catch (e) {
-    res.writeHead(502, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ reply: "(Connection error — try again!)", error: String(e) }));
+    console.error("chat upstream failed:", e);
+    return refuse(res, 502, "upstream_failed", "(Connection error — try again!)");
   }
 }
 
