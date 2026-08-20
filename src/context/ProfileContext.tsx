@@ -14,7 +14,18 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Bumped whenever the stored shape changes in a way that needs converting.
+ * Versioning exists from day one deliberately: `formKey` identity threads
+ * through four files, and CLAUDE.md warns that changing its shape silently
+ * invalidates every learner's stored `weakForms`. When that change comes
+ * (docs/12-persistence.md D-12-2 normalizes it into columns), there is a place
+ * to convert rather than a silent reset.
+ */
+export const PROFILE_SCHEMA_VERSION = 1;
+
 export type Profile = {
+  schemaVersion: number;
   name: string;
   completedUnits: string[];
   /** formKey ("verbId:tense:pronoun") -> miss count. Drives adaptive lessons. */
@@ -25,6 +36,7 @@ export type Profile = {
 };
 
 const EMPTY: Profile = {
+  schemaVersion: PROFILE_SCHEMA_VERSION,
   name: "",
   completedUnits: [],
   weakForms: {},
@@ -33,16 +45,89 @@ const EMPTY: Profile = {
   topics: [],
 };
 
+type Raw = Record<string, unknown>;
+
+function stringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.filter((v): v is string => typeof v === "string");
+}
+
+function scoreMap(value: unknown): Record<string, number> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const out: Record<string, number> = {};
+  for (const [key, score] of Object.entries(value as Raw)) {
+    if (typeof score === "number" && Number.isFinite(score) && score > 0) out[key] = score;
+  }
+  return out;
+}
+
+/**
+ * Coerce each field independently, so one corrupt value costs that field
+ * instead of the learner's whole history. A profile is the only record of
+ * their progress until docs/12-persistence.md lands, so losing it to a single
+ * bad key would be the worst possible failure here.
+ */
+function sanitize(raw: Raw): Profile {
+  const lessons = raw.lessonsToday as Raw | undefined;
+  const date = lessons && typeof lessons.date === "string" ? lessons.date : EMPTY.lessonsToday.date;
+  const count =
+    lessons && typeof lessons.count === "number" && Number.isFinite(lessons.count)
+      ? Math.max(0, Math.floor(lessons.count))
+      : 0;
+  const goal = typeof raw.dailyGoal === "number" && raw.dailyGoal > 0 ? Math.floor(raw.dailyGoal) : EMPTY.dailyGoal;
+  return {
+    schemaVersion:
+      typeof raw.schemaVersion === "number" && raw.schemaVersion > 0
+        ? raw.schemaVersion
+        : PROFILE_SCHEMA_VERSION,
+    name: typeof raw.name === "string" ? raw.name : EMPTY.name,
+    completedUnits: stringArray(raw.completedUnits) ?? [],
+    weakForms: scoreMap(raw.weakForms) ?? {},
+    dailyGoal: goal,
+    lessonsToday: { date, count },
+    topics: stringArray(raw.topics) ?? [],
+  };
+}
+
+/**
+ * Convert an older stored profile forward. Each entry takes the raw object
+ * from version N to N+1.
+ *
+ * A profile with no version was written before versioning existed; its shape
+ * is already compatible, so that step only stamps the version.
+ */
+const MIGRATIONS: Record<number, (raw: Raw) => Raw> = {
+  0: (raw) => ({ ...raw }),
+};
+
+function migrate(raw: Raw): Profile {
+  let current = typeof raw.schemaVersion === "number" && raw.schemaVersion > 0 ? raw.schemaVersion : 0;
+  let working = raw;
+  // A profile from a *newer* build is left alone rather than downgraded: the
+  // same learner may have two devices on different versions, and discarding
+  // fields we do not recognise would lose real progress.
+  while (current < PROFILE_SCHEMA_VERSION && MIGRATIONS[current]) {
+    working = MIGRATIONS[current](working);
+    current += 1;
+  }
+  const profile = sanitize(working);
+  return { ...profile, schemaVersion: Math.max(current, profile.schemaVersion) };
+}
+
 /** Read the stored profile, tolerating absent, corrupt or older-shaped JSON. */
 export function load(): Profile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY;
-    const p = { ...EMPTY, ...JSON.parse(raw) } as Profile;
+    if (!raw) return { ...EMPTY, lessonsToday: { date: todayISO(), count: 0 } };
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ...EMPTY, lessonsToday: { date: todayISO(), count: 0 } };
+    }
+    const p = migrate(parsed as Raw);
     if (p.lessonsToday.date !== todayISO()) p.lessonsToday = { date: todayISO(), count: 0 };
     return p;
   } catch {
-    return EMPTY;
+    return { ...EMPTY, lessonsToday: { date: todayISO(), count: 0 } };
   }
 }
 
