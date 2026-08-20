@@ -5,6 +5,8 @@ import { TOPICS, verbColor } from "../config";
 import { VERBS, getVerb } from "../curriculum/verbs";
 import { UNITS } from "../curriculum/path";
 import { badge, btn, formatMessage } from "../utils";
+import { useCopy } from "../copy";
+import { CONVERSATION_OPENERS, CONVERSATION_REPLIES, marcoGreeting } from "../content/italian";
 
 type Msg = { role: "marco" | "user"; text: string };
 const STORE = "corso-convo";
@@ -26,6 +28,7 @@ function loadSaved(): { msgs: Msg[]; verbs: string[]; topic: string } | null {
 
 export default function Conversation() {
   const { lang } = useLang();
+  const c = useCopy();
   const profile = useProfile();
   const saved = useMemo(loadSaved, []);
 
@@ -47,8 +50,7 @@ export default function Conversation() {
 
   const greeting = (): string => {
     const list = focusVerbs.map((v) => getVerb(v)?.infinitive).filter(Boolean).join(", ");
-    const who = profile.name ? ` ${profile.name}` : "";
-    return `Ciao${who}! 😊 Sono Marco, il tuo amico italiano. Oggi possiamo usare i verbi **${list}**. Di cosa vuoi parlare?`;
+    return marcoGreeting(list, profile.name);
   };
 
   const send = async (text: string) => {
@@ -79,13 +81,13 @@ export default function Conversation() {
       // rendered in the learner's language (see docs/04-interface-language.md).
       const text =
         data.error === "rate_limited"
-          ? lang === "en"
-            ? "You have sent a lot of messages just now — take a short break and try again in a few minutes."
-            : "Has enviado muchos mensajes ahora mismo — descansa un momento e inténtalo de nuevo en unos minutos."
-          : data.reply || "...";
+          ? c("state.rateLimited")
+          : data.error
+            ? c("state.serverUnavailable")
+            : data.reply || "...";
       setMsgs((m) => [...m, { role: "marco", text }]);
     } catch {
-      setMsgs((m) => [...m, { role: "marco", text: lang === "en" ? "(Connection error — try again!)" : "(Error de conexión — ¡inténtalo de nuevo!)" }]);
+      setMsgs((m) => [...m, { role: "marco", text: c("state.connectionError") }]);
     }
     setLoading(false);
   };
@@ -96,9 +98,7 @@ export default function Conversation() {
   const toggleFocus = (id: string) =>
     setFocusVerbs((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 6 ? [...p, id] : p));
 
-  const suggestions: string[] = started
-    ? ["Come si dice...?", "Dammi una sfida! 💪", lang === "en" ? "Non ho capito, puoi ripetere?" : "Non ho capito, puoi ripetere?"]
-    : ["Ciao Marco! Come stai?", "Raccontami del tuo weekend", "Cosa fai oggi?"];
+  const suggestions: string[] = started ? CONVERSATION_REPLIES : CONVERSATION_OPENERS;
 
   return (
     <div>

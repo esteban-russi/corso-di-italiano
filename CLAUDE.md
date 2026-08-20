@@ -205,9 +205,26 @@ there is no server-side session.
   `src/`. Add the token to *both* palettes in `index.html`; the same test enforces
   light/dark symmetry. Primitives beyond `btn`/`card`/`row`/`sub`: `onPrimary`, `scrim`,
   `modalPanel`, `badge`.
-- **Bilingual UI**: mostly inline `lang === "en" ? … : …` ternaries; `T` / `t` helpers exist in
-  `LangContext`. Italian appears only as *content* and flavor words (`Bravo!`, `Quasi!`), never
-  as an interface language.
+- **Interface is the learner's language. Italian is content.** The learner does not speak
+  Italian — that is the premise of the app — so every string they must *understand in order to
+  act* renders in `en`/`es`. The rule, enforced by `src/interfaceLanguage.test.ts`:
+
+  1. **New interface copy goes in `src/copy.ts`**, keyed, via `useCopy()`. Existing screens
+     still use inline `lang === "en" ? … : …` ternaries (`T`/`t` helpers in `LangContext`);
+     those migrate as [07](docs/07-design-system.md) rebuilds each screen, not before —
+     migrating call sites in files about to be rewritten is wasted work.
+  2. **Italian in the interface comes only from `FLAVOUR_WORDS`** in `src/copy.ts`, and only as
+     celebration or greeting — never instruction, label, navigation or error text. A flavour
+     word is never the sole carrier of meaning: `Quasi!` may *precede* "Here's the correct
+     form:", never replace it.
+  3. **Italian content lives in `src/content/italian.ts`, `curriculum/` and
+     `server/prompt.mjs`** — never in `src/components/`. Marco's dialogue and the learner's
+     suggested replies are content, not interface.
+  4. Anything the learner must understand to act — buttons, errors, permissions, empty and
+     offline states — is interface. No exceptions.
+
+  The guard is heuristic (`ITALIAN_MARKERS`), deliberately excluding words that also read as
+  Spanish or English. It catches regressions cheaply; it is not a proof.
 - **Typed answers** are graded through `answersMatch` / `normalize` in `lesson/lessonUi.tsx` —
   case-, accent- and whitespace-insensitive. Route all answer comparison through it.
 - **Production has no runtime npm dependencies** beyond React's build output. Keep
