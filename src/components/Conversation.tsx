@@ -75,7 +75,15 @@ export default function Conversation() {
         }),
       });
       const data = await res.json();
-      setMsgs((m) => [...m, { role: "marco", text: data.reply || "..." }]);
+      // Server errors arrive as a code, not as prose: interface text is always
+      // rendered in the learner's language (see docs/04-interface-language.md).
+      const text =
+        data.error === "rate_limited"
+          ? lang === "en"
+            ? "You have sent a lot of messages just now — take a short break and try again in a few minutes."
+            : "Has enviado muchos mensajes ahora mismo — descansa un momento e inténtalo de nuevo en unos minutos."
+          : data.reply || "...";
+      setMsgs((m) => [...m, { role: "marco", text }]);
     } catch {
       setMsgs((m) => [...m, { role: "marco", text: lang === "en" ? "(Connection error — try again!)" : "(Error de conexión — ¡inténtalo de nuevo!)" }]);
     }

@@ -7,6 +7,7 @@ import { join, extname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { buildChatPrompt } from "./prompt.mjs";
+import { clientKey, createRateLimiter, limiterConfigFromEnv } from "./rateLimit.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, "..", "dist");
@@ -16,6 +17,10 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API
 // "gemini-flash-latest" is an alias that tracks the current flash model, so it
 // keeps working when a specific dated version is retired for new API users.
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+
+// /api/chat spends money on every call, so it is never served unmetered.
+// Tunable via CHAT_RATE_LIMIT / CHAT_RATE_GLOBAL_LIMIT / CHAT_RATE_WINDOW_MS.
+const chatLimiter = createRateLimiter(limiterConfigFromEnv());
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -32,7 +37,24 @@ function readBody(req) {
   });
 }
 
+/**
+ * Refuse the request with a machine-readable code. The client localizes it, so
+ * no user-facing interface text is authored here (docs/04-interface-language.md);
+ * `reply` is only a last-resort fallback for an older client.
+ */
+function refuse(res, status, code, fallback, headers = {}) {
+  res.writeHead(status, { "Content-Type": "application/json", ...headers });
+  res.end(JSON.stringify({ error: code, reply: fallback }));
+}
+
 async function handleChat(req, res) {
+  const verdict = chatLimiter.check(clientKey(req));
+  if (!verdict.allowed) {
+    const retryAfter = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+    return refuse(res, 429, "rate_limited", "(Too many messages — take a short break!)", {
+      "Retry-After": String(retryAfter),
+    });
+  }
   if (!GEMINI_API_KEY) {
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ reply: "(Server missing GEMINI_API_KEY)" }));
@@ -57,6 +79,7 @@ async function handleChat(req, res) {
         }),
       }
     );
+    /** @type {{ candidates?: { content?: { parts?: { text?: string }[] } }[] }} */
     const data = await r.json();
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "...";
     res.writeHead(200, { "Content-Type": "application/json" });

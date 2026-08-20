@@ -1,0 +1,42 @@
+# The project's only automated gate. Mirrors `npm run build`, which itself runs
+# typecheck + tests before bundling. See docs/15-quality-and-testing.md.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      # Type-checks src/ and, separately, the Node server that the main
+      # tsconfig excludes.
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npx vite build
+
+      # Fails the build if the bundle outgrows the budget in
+      # docs/14-platform-pwa.md (D-14-6: 200 KB gzipped of JS).
+      - name: Check JS bundle budget
+        run: |
+          budget_kb=200
+          total=$(find dist/assets -name '*.js' -exec gzip -c {} \; | wc -c)
+          total_kb=$(( total / 1024 ))
+          echo "gzipped JS: ${total_kb} KB (budget ${budget_kb} KB)"
+          if [ "$total_kb" -gt "$budget_kb" ]; then
+            echo "::error::JS bundle is ${total_kb} KB gzipped, over the ${budget_kb} KB budget"
+            exit 1
+          fi

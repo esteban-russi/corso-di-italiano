@@ -33,7 +33,8 @@ const EMPTY: Profile = {
   topics: [],
 };
 
-function load(): Profile {
+/** Read the stored profile, tolerating absent, corrupt or older-shaped JSON. */
+export function load(): Profile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY;
