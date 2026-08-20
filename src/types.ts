@@ -1,4 +1,5 @@
-export type Lang = "it" | "es";
+/** Interface language. Italian is the target/content language, never the UI language. */
+export type Lang = "en" | "es";
 
 export type Verb = {
   id: string;

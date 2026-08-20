@@ -1,364 +1,102 @@
 import { useState, useCallback } from "react";
-import { LangProvider, useLang, T } from "./context/LangContext";
+import { LangProvider, useLang } from "./context/LangContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { VERB_BADGE_COLORS } from "./config";
+import { StreakProvider } from "./context/StreakContext";
+import { ProfileProvider, useProfile } from "./context/ProfileContext";
+import type { Lesson } from "./curriculum/types";
 import { btn, card } from "./utils";
-import type { ExerciseType } from "./types";
 import LangToggle from "./components/LangToggle";
+import LanguageGate from "./components/LanguageGate";
 import MainMenu from "./components/MainMenu";
-import SectionHeader from "./components/SectionHeader";
-import SectionPlaceholder from "./components/SectionPlaceholder";
 import Settings from "./components/Settings";
-import ConjTable from "./components/ConjTable";
-import VerbSelector from "./components/VerbSelector";
+import StreakBadge from "./components/StreakBadge";
+import VerbHome from "./components/VerbHome";
+import LessonPlayer from "./components/lesson/LessonPlayer";
 import LessonSummary from "./components/LessonSummary";
-import FlashQuiz from "./components/exercises/FlashQuiz";
-import MultipleChoice from "./components/exercises/MultipleChoice";
-import Completa from "./components/exercises/Completa";
-import Riordina from "./components/exercises/Riordina";
-import Traduci from "./components/exercises/Traduci";
-import Abbina from "./components/exercises/Abbina";
-import Chat from "./components/exercises/Chat";
+import Conversation from "./components/Conversation";
 
-type AppStage =
-  | { kind: "selector" }
-  | { kind: "lesson"; verbs: string[]; exercises: ExerciseType[]; step: number; errors: number; startTime: number }
+type Section = "home" | "verbs-learning" | "conversation" | "settings";
+type Stage =
+  | { kind: "home" }
+  | { kind: "lesson"; lesson: Lesson; title: string; unitId?: string }
   | { kind: "summary"; errors: number; startTime: number };
 
-type AppSection = "home" | "verbs-learning" | "conversation" | "settings";
-
-const exerciseMeta: Record<string, { emoji: string; titleIt: string; titleEs: string; descIt: string; descEs: string }> = {
-  "intro": { emoji: "📋", titleIt: "Tabella di coniugazione", titleEs: "Tabla de conjugación", descIt: "Studia le coniugazioni dei verbi selezionati.", descEs: "Estudia las conjugaciones de los verbos seleccionados." },
-  "flash-quiz": { emoji: "⚡", titleIt: "Flash-Quiz", titleEs: "Flash-Quiz", descIt: "Flash-quiz di coniugazione. Risposte rapide.", descEs: "Flash-quiz de conjugación. Respuestas rápidas." },
-  "multiple-choice": { emoji: "🔘", titleIt: "Scelta multipla", titleEs: "Opción múltiple", descIt: "Scegli la risposta corretta tra le opzioni.", descEs: "Elige la respuesta correcta entre las opciones." },
-  "completa": { emoji: "✏️", titleIt: "Completa la frase", titleEs: "Completa la frase", descIt: "Inserisci il verbo corretto nel contesto.", descEs: "Inserta el verbo correcto en contexto." },
-  "riordina": { emoji: "🔀", titleIt: "Riordina la frase", titleEs: "Reordena la frase", descIt: "Metti le parole nell'ordine giusto.", descEs: "Pon las palabras en el orden correcto." },
-  "traduci": { emoji: "🇪🇸→🇮🇹", titleIt: "Traduci", titleEs: "Traduce", descIt: "Traduci dallo spagnolo all'italiano.", descEs: "Traduce del español al italiano." },
-  "abbina": { emoji: "🔗", titleIt: "Abbina", titleEs: "Empareja", descIt: "Collega ogni pronome alla forma verbale corretta.", descEs: "Conecta cada pronombre con la forma verbal correcta." },
-  "chat": { emoji: "💬", titleIt: "Conversazione", titleEs: "Conversación", descIt: "Conversa con il tuo amico italiano. Lui ti correggerà.", descEs: "Conversa con tu amigo italiano. Él te corregirá." },
-};
-
-function renderExercise(
-  exerciseKey: ExerciseType,
-  verbs: string[],
-  onError: () => void,
-  onComplete: () => void,
-  step: number,
-) {
-  const props = { selectedVerbs: verbs, onError, onComplete };
-  switch (exerciseKey) {
-    case "intro": return (
-      <div key={`intro-${step}`} className="fade-in">
-        <ConjTable selectedVerbs={verbs} />
-        <button
-          onClick={onComplete}
-          className="btn-primary"
-          style={{ ...btn(), marginTop: 16, padding: "11px 22px", fontWeight: 600 }}
-        >
-          <T it="Continua →" es="Continuar →" />
-        </button>
-      </div>
-    );
-    case "flash-quiz": return <FlashQuiz key={`fq-${step}`} {...props} />;
-    case "multiple-choice": return <MultipleChoice key={`mc-${step}`} {...props} />;
-    case "completa": return <Completa key={`co-${step}`} {...props} />;
-    case "riordina": return <Riordina key={`ri-${step}`} {...props} />;
-    case "traduci": return <Traduci key={`tr-${step}`} {...props} />;
-    case "abbina": return <Abbina key={`ab-${step}`} {...props} />;
-    case "chat": return <Chat key={`ch-${step}`} selectedVerbs={verbs} onComplete={onComplete} />;
-    default: return null;
-  }
-}
-
 function AppContent() {
-  const [section, setSection] = useState<AppSection>("home");
-  const [stage, setStage] = useState<AppStage>({ kind: "selector" });
-  const [showConjTable, setShowConjTable] = useState(false);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const { lang, chosen } = useLang();
+  const { completeUnit } = useProfile();
+  const [section, setSection] = useState<Section>("home");
+  const [stage, setStage] = useState<Stage>({ kind: "home" });
 
-  const sectionSubtitle = {
-    home: <T it="Scegli una sezione del corso" es="Elige una sección del curso" />,
-    "verbs-learning": <T it="Verbi irregolari — presente indicativo" es="Verbos irregulares — presente indicativo" />,
-    conversation: <T it="Conversazione guidata — anteprima" es="Conversación guiada — vista previa" />,
-    settings: <T it="Personalizzazione dell'app" es="Personalización de la app" />,
-  }[section];
+  const inLesson = section === "verbs-learning" && stage.kind === "lesson";
+  const showHomeButton = section !== "home" && !inLesson;
 
-  const showHomeButton = section !== "home" && !(section === "verbs-learning" && stage.kind === "lesson");
+  const subtitle: Record<Section, string> = {
+    home: lang === "en" ? "Choose a section" : "Elige una sección",
+    "verbs-learning": lang === "en" ? "Verb lessons" : "Lecciones de verbos",
+    conversation: lang === "en" ? "Chat with Marco" : "Habla con Marco",
+    settings: lang === "en" ? "Personalize the app" : "Personaliza la app",
+  };
 
-  const handleStart = useCallback((verbs: string[], exercises: ExerciseType[]) => {
-    setStage({ kind: "lesson", verbs, exercises, step: 0, errors: 0, startTime: Date.now() });
-    setShowConjTable(false);
+  const startLesson = useCallback((lesson: Lesson, title: string, unitId?: string) => {
+    setStage({ kind: "lesson", lesson, title, unitId });
   }, []);
 
-  const handleError = useCallback(() => {
-    setStage((s) => s.kind === "lesson" ? { ...s, errors: s.errors + 1 } : s);
-  }, []);
-
-  const handleNextStep = useCallback(() => {
+  const finishLesson = useCallback((errors: number, startTime: number) => {
     setStage((s) => {
-      if (s.kind !== "lesson") return s;
-      const nextStep = s.step + 1;
-      if (nextStep >= s.exercises.length) {
-        return { kind: "summary", errors: s.errors, startTime: s.startTime };
-      }
-      return { ...s, step: nextStep };
+      if (s.kind === "lesson" && s.unitId) completeUnit(s.unitId);
+      return { kind: "summary", errors, startTime };
     });
-  }, []);
+  }, [completeUnit]);
 
-  const handleResetLesson = useCallback(() => {
-    setStage({ kind: "selector" });
-    setShowConjTable(false);
-  }, []);
-
-  const handleReturnHome = useCallback(() => {
-    handleResetLesson();
+  const goHome = useCallback(() => {
+    setStage({ kind: "home" });
     setSection("home");
-    setShowExitConfirm(false);
-  }, [handleResetLesson]);
+  }, []);
+
+  const backToVerbHome = useCallback(() => setStage({ kind: "home" }), []);
 
   return (
     <div style={{ padding: "1rem 0", fontFamily: "var(--font-sans)" }}>
-      <h2 className="sr-only">Classe interattiva di italiano</h2>
+      {!chosen && <LanguageGate />}
 
-      {/* Header bar — friendly blue with a tricolor accent */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          marginBottom: 22,
-          padding: "14px 18px",
-          background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-primary) 70%)",
-          borderRadius: 14,
-          border: "1px solid var(--color-border-tertiary)",
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <div
-          aria-hidden="true"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            background: "var(--color-primary)",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 22,
-            flexShrink: 0,
-            boxShadow: "var(--shadow-md)",
-          }}
-        >
-          🇮🇹
-        </div>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22, padding: "14px 18px", background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-primary) 70%)", borderRadius: 14, border: "1px solid var(--color-border-tertiary)", boxShadow: "var(--shadow-sm)" }}>
+        <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 12, background: "var(--color-primary)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, boxShadow: "var(--shadow-md)" }}>🇮🇹</div>
         <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 17,
-              fontWeight: 700,
-              color: "var(--color-text-primary)",
-              letterSpacing: "-0.01em",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <div style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 8 }}>
             Corso di Italiano
-            <span
-              aria-hidden="true"
-              style={{ display: "inline-flex", borderRadius: 3, overflow: "hidden" }}
-            >
+            <span aria-hidden="true" style={{ display: "inline-flex", borderRadius: 3, overflow: "hidden" }}>
               <span style={{ width: 5, height: 12, background: "#009246" }} />
               <span style={{ width: 5, height: 12, background: "#fff", border: "0.5px solid var(--color-border-tertiary)" }} />
               <span style={{ width: 5, height: 12, background: "#CE2B37" }} />
             </span>
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>
-            {sectionSubtitle}
-          </div>
+          <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>{subtitle[section]}</div>
         </div>
         <span style={{ flex: 1 }} />
+        <StreakBadge />
         {showHomeButton && (
-          <button
-            onClick={handleReturnHome}
-            className="btn-secondary"
-            style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}
-          >
-            <T it="Menu" es="Menú" />
+          <button onClick={goHome} className="btn-secondary" style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}>
+            {lang === "en" ? "Menu" : "Menú"}
           </button>
         )}
         <LangToggle />
       </div>
 
-      {/* Lesson in progress: verb badges + progress bar + controls */}
-      {section === "verbs-learning" && stage.kind === "lesson" && (
-        <>
-          <div style={{ marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            {stage.verbs.map((v) => {
-              const colors = VERB_BADGE_COLORS[v] ?? { bg: "#eee", color: "#333" };
-              return (
-                <span key={v} style={{ padding: "4px 16px", borderRadius: 20, fontWeight: 500, fontSize: 13, background: colors.bg, color: colors.color }}>
-                  {v}
-                </span>
-              );
-            })}
-          </div>
-
-          {/* Progress bar */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--color-text-secondary)", marginBottom: 6 }}>
-              <span style={{ fontWeight: 500 }}>
-                <T it={`Esercizio ${stage.step + 1} di ${stage.exercises.length}`} es={`Ejercicio ${stage.step + 1} de ${stage.exercises.length}`} />
-              </span>
-              <span style={{ color: stage.errors > 0 ? "var(--color-danger)" : "var(--color-text-secondary)" }}>
-                {stage.errors} <T it="errori" es="errores" />
-              </span>
-            </div>
-            <div style={{ height: 6, background: "var(--color-border-tertiary)", borderRadius: 999, overflow: "hidden" }}>
-              <div
-                style={{
-                  height: "100%",
-                  width: `${((stage.step + 1) / stage.exercises.length) * 100}%`,
-                  background: "linear-gradient(90deg, var(--color-primary), var(--color-primary-hover))",
-                  borderRadius: 999,
-                  transition: "width 0.4s cubic-bezier(.4,0,.2,1)",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
-            <button
-              onClick={() => setShowConjTable((s) => !s)}
-              className="btn-secondary"
-              style={{ ...btn(), fontSize: 12.5, padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 6 }}
-            >
-              📋 <T it={showConjTable ? "Nascondi tabella" : "Mostra tabella"} es={showConjTable ? "Ocultar tabla" : "Mostrar tabla"} />
-            </button>
-            <span style={{ flex: 1 }} />
-            <button
-              onClick={() => setShowExitConfirm(true)}
-              className="btn-danger"
-              style={{ ...btn(), fontSize: 12.5, padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 6 }}
-            >
-              ✕ <T it="Esci" es="Salir" />
-            </button>
-          </div>
-
-          {showConjTable && (
-            <div style={{ ...card, marginBottom: 16 }}>
-              <ConjTable selectedVerbs={stage.verbs} />
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Exit confirmation overlay */}
-      {showExitConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.55)",
-            backdropFilter: "blur(2px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            className="fade-in"
-            style={{
-              background: "var(--color-background-primary)",
-              borderRadius: 16,
-              padding: "30px 32px 26px",
-              maxWidth: 380,
-              width: "90%",
-              textAlign: "center",
-              boxShadow: "var(--shadow-lg)",
-              border: "1px solid var(--color-border-tertiary)",
-            }}
-          >
-            <div
-              aria-hidden="true"
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: "50%",
-                background: "var(--color-primary-soft)",
-                color: "var(--color-primary-hover)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 28,
-                margin: "0 auto 14px",
-              }}
-            >
-              👋
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: "var(--color-text-primary)" }}>
-              <T it="Vuoi uscire dalla lezione?" es="¿Quieres salir de la lección?" />
-            </div>
-            <div style={{ fontSize: 13.5, color: "var(--color-text-secondary)", marginBottom: 22, lineHeight: 1.5 }}>
-              <T it="Il tuo progresso non sarà salvato." es="Tu progreso no se guardará." />
-            </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button
-                onClick={() => setShowExitConfirm(false)}
-                className="btn-secondary"
-                style={{ ...btn(), padding: "10px 22px", fontSize: 14, fontWeight: 500 }}
-              >
-                <T it="Annulla" es="Cancelar" />
-              </button>
-              <button
-                onClick={handleReturnHome}
-                className="btn-danger-solid"
-                style={{ ...btn(), padding: "10px 22px", fontSize: 14, fontWeight: 600 }}
-              >
-                <T it="Esci" es="Salir" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Content */}
       <div key={`${section}-${stage.kind}`} className="fade-in" style={card}>
-        {section === "home" && <MainMenu onSelectSection={setSection} />}
+        {section === "home" && <MainMenu onSelectSection={(s) => { setSection(s); setStage({ kind: "home" }); }} />}
 
-        {section === "verbs-learning" && stage.kind === "selector" && <VerbSelector onStart={handleStart} />}
-
-        {section === "verbs-learning" && stage.kind === "lesson" && (() => {
-          const exerciseKey = stage.exercises[stage.step];
-          const meta = exerciseMeta[exerciseKey];
-          if (!meta) return null;
-          return (
-            <>
-              <SectionHeader emoji={meta.emoji} titleIt={meta.titleIt} titleEs={meta.titleEs} descIt={meta.descIt} descEs={meta.descEs} />
-              {renderExercise(exerciseKey, stage.verbs, handleError, handleNextStep, stage.step)}
-            </>
-          );
-        })()}
-
-        {section === "verbs-learning" && stage.kind === "summary" && <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={handleReturnHome} />}
-
-        {section === "conversation" && (
-          <SectionPlaceholder
-            emoji="💬"
-            titleIt="Conversazione"
-            titleEs="Conversación"
-            bodyIt="Questa sezione non è ancora stata pubblicata. Qui arriveranno esercizi e scenari di dialogo guidato."
-            bodyEs="Esta sección aún no ha sido publicada. Aquí llegarán ejercicios y escenarios de diálogo guiado."
-            onBack={handleReturnHome}
-          />
+        {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
+        {section === "verbs-learning" && stage.kind === "lesson" && (
+          <LessonPlayer lesson={stage.lesson} title={stage.title} onExit={backToVerbHome} onFinish={finishLesson} />
+        )}
+        {section === "verbs-learning" && stage.kind === "summary" && (
+          <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={backToVerbHome} />
         )}
 
-        {section === "settings" && (
-          <Settings onBack={handleReturnHome} />
-        )}
+        {section === "conversation" && <Conversation />}
+        {section === "settings" && <Settings onBack={goHome} />}
       </div>
     </div>
   );
@@ -368,7 +106,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <LangProvider>
-        <AppContent />
+        <ProfileProvider>
+          <StreakProvider>
+            <AppContent />
+          </StreakProvider>
+        </ProfileProvider>
       </LangProvider>
     </ThemeProvider>
   );
