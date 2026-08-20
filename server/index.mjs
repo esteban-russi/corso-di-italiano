@@ -11,7 +11,8 @@ import { buildChatPrompt } from "./prompt.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, "..", "dist");
 const PORT = process.env.PORT || 8080;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+// Accept the legacy VITE_-prefixed name too, since that is what local .env files carry.
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "";
 // "gemini-flash-latest" is an alias that tracks the current flash model, so it
 // keeps working when a specific dated version is retired for new API users.
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
