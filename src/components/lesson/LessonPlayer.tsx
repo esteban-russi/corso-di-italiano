@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLang } from "../../context/LangContext";
 import { useStreak } from "../../context/StreakContext";
 import { useProfile } from "../../context/ProfileContext";
@@ -10,10 +10,16 @@ import ConjTable from "../ConjTable";
 import { FlashCard, ChoiceCard, CompleteCard, MatchCard, IntroCard, type LessonResult } from "./LessonCards";
 
 export default function LessonPlayer({
-  lesson, title, onExit, onFinish,
+  lesson, title, backSignal = 0, onExit, onFinish,
 }: {
   lesson: Lesson;
   title: string;
+  /**
+   * Incremented by App when the system back gesture is caught mid-lesson.
+   * Opens the same confirmation as the exit button, so progress in an
+   * abandoned lesson is never discarded without asking.
+   */
+  backSignal?: number;
   onExit: () => void;
   onFinish: (errors: number, startTime: number) => void;
 }) {
@@ -27,6 +33,10 @@ export default function LessonPlayer({
   const errors = useRef(0);
   const misses = useRef<string[]>([]);
   const hits = useRef<string[]>([]);
+
+  useEffect(() => {
+    if (backSignal > 0) setShowExit(true);
+  }, [backSignal]);
 
   const items = lesson.items;
   const item = items[step];

@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { LangProvider, useLang } from "./context/LangContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { StreakProvider } from "./context/StreakContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import type { Lesson } from "./curriculum/types";
+import { isForward, navFromPath, pathFor, sameNav, type NavState } from "./navigation";
 import { btn, card, onPrimary } from "./utils";
 import LangToggle from "./components/LangToggle";
 import LanguageGate from "./components/LanguageGate";
@@ -15,7 +16,7 @@ import LessonPlayer from "./components/lesson/LessonPlayer";
 import LessonSummary from "./components/LessonSummary";
 import Conversation from "./components/Conversation";
 
-type Section = "home" | "verbs-learning" | "conversation" | "settings";
+type Section = NavState["section"];
 type Stage =
   | { kind: "home" }
   | { kind: "lesson"; lesson: Lesson; title: string; unitId?: string }
@@ -24,11 +25,52 @@ type Stage =
 function AppContent() {
   const { lang, chosen } = useLang();
   const { completeUnit } = useProfile();
-  const [section, setSection] = useState<Section>("home");
+  // Deep links land on a section; lessons cannot be reconstructed from a URL.
+  const initial = useRef(navFromPath(window.location.pathname)).current;
+  const [section, setSection] = useState<Section>(initial.section);
   const [stage, setStage] = useState<Stage>({ kind: "home" });
+  /** Bumped when the system back gesture is caught during a lesson. */
+  const [backSignal, setBackSignal] = useState(0);
 
   const inLesson = section === "verbs-learning" && stage.kind === "lesson";
   const showHomeButton = section !== "home" && !inLesson;
+
+  const nav: NavState = { section, stage: stage.kind };
+  const navRef = useRef(nav);
+  const inLessonRef = useRef(inLesson);
+  inLessonRef.current = inLesson;
+
+  /**
+   * Keep the URL in step with the state machine, so the platform back gesture
+   * goes back a screen instead of leaving the app (docs/14-platform-pwa.md
+   * D-14-2). Going deeper pushes; anything else replaces, so back never lands
+   * on a screen the learner did not visit.
+   */
+  useEffect(() => {
+    const previous = navRef.current;
+    navRef.current = nav;
+    if (sameNav(previous, nav) && window.history.state) return;
+    const path = pathFor(nav);
+    if (isForward(previous, nav)) window.history.pushState(nav, "", path);
+    else window.history.replaceState(nav, "", path);
+  }, [nav.section, nav.stage]);
+
+  useEffect(() => {
+    const onPop = (event: PopStateEvent) => {
+      // A lesson in progress is not abandoned silently: re-assert the entry and
+      // let LessonPlayer ask, exactly as its own exit button does.
+      if (inLessonRef.current) {
+        window.history.pushState(navRef.current, "", pathFor(navRef.current));
+        setBackSignal((n) => n + 1);
+        return;
+      }
+      const target: NavState = (event.state as NavState | null) ?? { section: "home", stage: "home" };
+      setSection(target.section);
+      setStage({ kind: "home" });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const subtitle: Record<Section, string> = {
     home: lang === "en" ? "Choose a section" : "Elige una sección",
@@ -89,7 +131,7 @@ function AppContent() {
 
         {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
         {section === "verbs-learning" && stage.kind === "lesson" && (
-          <LessonPlayer lesson={stage.lesson} title={stage.title} onExit={backToVerbHome} onFinish={finishLesson} />
+          <LessonPlayer lesson={stage.lesson} title={stage.title} backSignal={backSignal} onExit={backToVerbHome} onFinish={finishLesson} />
         )}
         {section === "verbs-learning" && stage.kind === "summary" && (
           <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={backToVerbHome} />
