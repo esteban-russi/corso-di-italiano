@@ -1,30 +1,101 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLang } from "../context/LangContext";
 import { useProfile } from "../context/ProfileContext";
+import { useCopy } from "../copy";
 import { verbColor } from "../config";
 import { UNITS } from "../curriculum/path";
 import { VERBS } from "../curriculum/verbs";
 import { generateLesson } from "../curriculum/lesson";
-import { TENSES, TENSE_LABEL, type Lesson, type Tense, type Unit } from "../curriculum/types";
-import { btn, onPrimary } from "../utils";
+import {
+  eligibleTenses,
+  nextUnit,
+  nextUnitIndex,
+  pathProgress,
+  pickRandomTarget,
+  reachedLevel,
+  seenVerbs,
+  weakSetForTense,
+} from "../curriculum/entry";
+import { TENSE_LABEL, type Lesson, type Tense, type Unit } from "../curriculum/types";
+import { btn, onPrimary, sub } from "../utils";
+import EntryPoints, { type EntryDoor } from "./EntryPoints";
 
-type Mode = "path" | "pick" | "quick";
+/** Verb count above which Choose offers a search field. */
+const SEARCH_THRESHOLD = 20;
 
-function weakSetForTense(weakKeys: string[], tense: Tense): Set<string> {
-  return new Set(weakKeys.filter((k) => k.split(":")[1] === tense));
-}
+type View = "doors" | "choose" | "path";
 
 export default function VerbHome({ onStart }: { onStart: (lesson: Lesson, title: string, unitId?: string) => void }) {
   const { lang } = useLang();
+  const c = useCopy();
   const profile = useProfile();
-  const [mode, setMode] = useState<Mode>("path");
+  const [view, setView] = useState<View>("doors");
 
   const start = (verbIds: string[], tense: Tense, title: string, includeIntro: boolean, unitId?: string) => {
     const weak = weakSetForTense(profile.weakKeys(), tense);
     onStart(generateLesson(verbIds, tense, { weak, includeIntro }), title, unitId);
   };
 
-  const nextUnitIndex = UNITS.findIndex((u) => !profile.isUnitComplete(u.id));
+  const isComplete = (id: string) => profile.isUnitComplete(id);
+  const progress = pathProgress(isComplete);
+  const upNext = nextUnit(isComplete);
+  const level = reachedLevel(profile.completedUnits);
+
+  /**
+   * Random is the adaptive door: weak forms are folded in here rather than
+   * living behind a fourth button (docs/05-three-ways-in.md D-05-1).
+   */
+  const startRandom = () => {
+    const target = pickRandomTarget({
+      pool: seenVerbs(profile.completedUnits),
+      weakKeys: profile.weakKeys(),
+      level,
+    });
+    if (!target) return;
+    start(target.verbIds, target.tense, c("entry.random.title"), false);
+  };
+
+  const startContinue = () => {
+    if (upNext) {
+      start(upNext.verbIds, upNext.tense, lang === "en" ? upNext.titleEn : upNext.titleEs, true, upNext.id);
+      return;
+    }
+    // Path finished (D-05-3b): Continue becomes review over everything seen.
+    const target = pickRandomTarget({
+      pool: seenVerbs(profile.completedUnits),
+      weakKeys: profile.weakKeys(),
+      level,
+    });
+    if (target) start(target.verbIds, target.tense, c("entry.reviewTitle"), false);
+  };
+
+  const doors: EntryDoor[] = [
+    {
+      kind: "continue",
+      emoji: progress.finished ? "🔁" : "▶️",
+      title: progress.finished ? c("entry.reviewTitle") : c("entry.continue.title"),
+      body: progress.finished ? c("entry.reviewBody") : c("entry.continue.body"),
+      meta: progress.finished
+        ? undefined
+        : c("entry.unitProgress", { current: nextUnitIndex(isComplete) + 1, total: progress.total }),
+      onSelect: startContinue,
+    },
+    {
+      kind: "random",
+      emoji: "🎲",
+      title: c("entry.random.title"),
+      body: c("entry.random.body"),
+      meta: c("entry.level", { level }),
+      onSelect: startRandom,
+    },
+    {
+      kind: "choose",
+      emoji: "🎯",
+      title: c("entry.choose.title"),
+      body: c("entry.choose.body"),
+      onSelect: () => setView("choose"),
+    },
+  ];
 
   return (
     <div>
@@ -41,18 +112,38 @@ export default function VerbHome({ onStart }: { onStart: (lesson: Lesson, title:
         <DailyGoal />
       </div>
 
-      {/* Mode tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-        {([["path", lang === "en" ? "Path" : "Ruta"], ["pick", lang === "en" ? "Pick verbs" : "Elegir verbos"], ["quick", lang === "en" ? "Quick practice" : "Práctica rápida"]] as [Mode, string][]).map(([m, label]) => (
-          <button key={m} onClick={() => setMode(m)} style={{ ...btn(mode === m), flex: 1, fontSize: 13, fontWeight: 600, padding: "9px 8px" }}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {view === "doors" && (
+        <>
+          <EntryPoints
+            doors={doors}
+            secondary={{ label: c("entry.viewPath"), onSelect: () => setView("path") }}
+          />
+          {progress.finished && (
+            <p style={{ ...sub, marginTop: 14, textAlign: "center", lineHeight: 1.6 }}>
+              {c("empty.pathComplete")}
+            </p>
+          )}
+        </>
+      )}
 
-      {mode === "path" && <PathView nextIndex={nextUnitIndex} onStartUnit={(u) => start(u.verbIds, u.tense, lang === "en" ? u.titleEn : u.titleEs, true, u.id)} />}
-      {mode === "pick" && <PickView onStart={start} />}
-      {mode === "quick" && <QuickView onStart={start} />}
+      {view !== "doors" && (
+        <button
+          onClick={() => setView("doors")}
+          className="btn-ghost"
+          style={{ ...btn(), marginBottom: 14, padding: "6px 12px", fontSize: 12.5, fontWeight: 600 }}
+        >
+          ← {c("entry.back")}
+        </button>
+      )}
+
+      {view === "path" && (
+        <PathView
+          nextIndex={nextUnitIndex(isComplete)}
+          onStartUnit={(u) => start(u.verbIds, u.tense, lang === "en" ? u.titleEn : u.titleEs, true, u.id)}
+        />
+      )}
+
+      {view === "choose" && <ChooseView level={level} onStart={start} />}
     </div>
   );
 }
@@ -123,108 +214,128 @@ function PathView({ nextIndex, onStartUnit }: { nextIndex: number; onStartUnit: 
   );
 }
 
-function VerbGrid({ selected, toggle }: { selected: string[]; toggle: (id: string) => void }) {
-  const byLevel: Record<number, typeof VERBS> = {};
-  for (const v of VERBS) (byLevel[v.level] ??= []).push(v);
-  return (
-    <>
-      {Object.keys(byLevel).map(Number).sort((a, b) => a - b).map((lvl) => (
-        <div key={lvl} style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--color-text-secondary)", marginBottom: 8 }}>Level {lvl}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8 }}>
-            {byLevel[lvl].map((v) => {
-              const on = selected.includes(v.id);
-              const c = verbColor(v.id);
-              return (
-                <button key={v.id} onClick={() => toggle(v.id)} style={{ ...btn(on), padding: "9px 10px", fontSize: 13.5, fontWeight: 600, borderColor: on ? c.color : undefined, background: on ? c.bg : undefined, color: on ? c.color : undefined }}>
-                  {v.infinitive}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </>
-  );
-}
-
-function TensePicker({ value, onChange }: { value: Tense; onChange: (t: Tense) => void }) {
+/**
+ * Choose. Multi-select is deliberately preserved from the old "Pick verbs"
+ * mode — selecting exactly one verb is the common case and satisfies "pick a
+ * specific item", but taking multi-select away would have been a regression.
+ * Search appears once the list is long enough to need it.
+ */
+function ChooseView({
+  level,
+  onStart,
+}: {
+  level: number;
+  onStart: (verbIds: string[], tense: Tense, title: string, includeIntro: boolean) => void;
+}) {
   const { lang } = useLang();
-  return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-      {TENSES.map((t) => (
-        <button key={t} onClick={() => onChange(t)} style={{ ...btn(value === t), fontSize: 12.5, padding: "7px 12px", fontWeight: 600 }}>
-          {TENSE_LABEL[t][lang]}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function PickView({ onStart }: { onStart: (verbIds: string[], tense: Tense, title: string, includeIntro: boolean) => void }) {
-  const { lang } = useLang();
+  const c = useCopy();
   const [selected, setSelected] = useState<string[]>([]);
   const [tense, setTense] = useState<Tense>("presente");
-  const toggle = (id: string) => setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-  const canStart = selected.length > 0;
+  const [query, setQuery] = useState("");
+
+  // Only offer tenses the learner has reached, so Choose cannot hand a
+  // beginner a tense they have never seen taught.
+  const tenses = useMemo(() => eligibleTenses(level), [level]);
+  const activeTense = tenses.includes(tense) ? tense : tenses[0];
+
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return VERBS;
+    return VERBS.filter(
+      (v) =>
+        v.infinitive.toLowerCase().includes(q) ||
+        v.en.toLowerCase().includes(q) ||
+        v.es.toLowerCase().includes(q)
+    );
+  }, [query]);
+
+  const byLevel = useMemo(() => {
+    const groups: Record<number, typeof VERBS> = {};
+    for (const v of matches) (groups[v.level] ??= []).push(v);
+    return groups;
+  }, [matches]);
+
+  const toggle = (id: string) =>
+    setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
+  const startLabel =
+    selected.length === 0
+      ? c("choose.pickSomething")
+      : selected.length === 1
+        ? c("choose.startOne", { verb: VERBS.find((v) => v.id === selected[0])?.infinitive ?? "" })
+        : c("choose.startMany", { count: selected.length });
+
   return (
     <div>
-      <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 10 }}>{lang === "en" ? "1. Choose verbs" : "1. Elige verbos"}</div>
-      <VerbGrid selected={selected} toggle={toggle} />
-      <div style={{ fontSize: 13.5, fontWeight: 600, margin: "6px 0 10px" }}>{lang === "en" ? "2. Choose a tense" : "2. Elige un tiempo"}</div>
-      <TensePicker value={tense} onChange={setTense} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, flex: 1 }}>{c("choose.chooseVerbs")}</div>
+        {selected.length > 0 && (
+          <button onClick={() => setSelected([])} className="btn-ghost" style={{ ...btn(), padding: "3px 10px", fontSize: 12 }}>
+            {c("choose.clear")}
+          </button>
+        )}
+      </div>
+
+      {VERBS.length > SEARCH_THRESHOLD && (
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={c("choose.searchPlaceholder")}
+          aria-label={c("choose.searchPlaceholder")}
+          style={{
+            width: "100%", padding: "10px 14px", fontSize: 14, borderRadius: 10, marginBottom: 14,
+            border: "1px solid var(--color-border-secondary)",
+            background: "var(--color-background-primary)",
+            color: "var(--color-text-primary)",
+            fontFamily: "inherit",
+          }}
+        />
+      )}
+
+      {matches.length === 0 ? (
+        <p style={{ ...sub, padding: "18px 4px" }}>{c("choose.noResults")}</p>
+      ) : (
+        Object.keys(byLevel).map(Number).sort((a, b) => a - b).map((lvl) => (
+          <div key={lvl} style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--color-text-secondary)", marginBottom: 8 }}>
+              {c("entry.level", { level: lvl })}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8 }}>
+              {byLevel[lvl].map((v) => {
+                const on = selected.includes(v.id);
+                const tone = verbColor(v.id);
+                return (
+                  <button
+                    key={v.id}
+                    onClick={() => toggle(v.id)}
+                    aria-pressed={on}
+                    style={{ ...btn(on), padding: "9px 10px", fontSize: 13.5, fontWeight: 600, borderColor: on ? tone.color : undefined, background: on ? tone.bg : undefined, color: on ? tone.color : undefined }}
+                  >
+                    {v.infinitive}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
+
+      <div style={{ fontSize: 13.5, fontWeight: 600, margin: "6px 0 10px" }}>{c("choose.chooseTense")}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        {tenses.map((t) => (
+          <button key={t} onClick={() => setTense(t)} style={{ ...btn(activeTense === t), fontSize: 12.5, padding: "7px 12px", fontWeight: 600 }}>
+            {TENSE_LABEL[t][lang]}
+          </button>
+        ))}
+      </div>
+
       <button
-        disabled={!canStart}
-        onClick={() => onStart(selected, tense, lang === "en" ? "Custom practice" : "Práctica personalizada", true)}
+        disabled={selected.length === 0}
+        onClick={() => onStart(selected, activeTense, c("entry.choose.title"), true)}
         className="btn-primary"
-        style={{ ...btn(), width: "100%", padding: "13px 24px", fontWeight: 600, fontSize: 15 }}
+        style={{ ...btn(), width: "100%", padding: "13px 24px", fontWeight: 600, fontSize: 15, opacity: selected.length === 0 ? 0.55 : 1 }}
       >
-        {lang === "en" ? "Start lesson →" : "Comenzar lección →"}
-      </button>
-    </div>
-  );
-}
-
-function QuickView({ onStart }: { onStart: (verbIds: string[], tense: Tense, title: string, includeIntro: boolean) => void }) {
-  const { lang } = useLang();
-  const { completedUnits, weakKeys } = useProfile();
-  // Pool: verbs the learner has already seen (from completed units), else level 1-2.
-  const seen = new Set<string>();
-  for (const uid of completedUnits) {
-    const unit = UNITS.find((u) => u.id === uid);
-    unit?.verbIds.forEach((v) => seen.add(v));
-  }
-  const pool = seen.size >= 3 ? [...seen] : VERBS.filter((v) => v.level <= 2).map((v) => v.id);
-  const weakCount = weakKeys().length;
-
-  const startQuick = () => {
-    const pick = [...pool].sort(() => Math.random() - 0.5).slice(0, 4);
-    onStart(pick, "presente", lang === "en" ? "Quick practice" : "Práctica rápida", false);
-  };
-  const startReview = () => {
-    // Review weakest verbs across their weak tense.
-    const keys = weakKeys().slice(0, 6);
-    const byTense: Record<string, Set<string>> = {};
-    keys.forEach((k) => { const [v, t] = k.split(":"); (byTense[t] ??= new Set()).add(v); });
-    const [tense, verbs] = Object.entries(byTense).sort((a, b) => b[1].size - a[1].size)[0] ?? ["presente", new Set(pool.slice(0, 3))];
-    onStart([...verbs], tense as Tense, lang === "en" ? "Weak-spot review" : "Repaso de puntos débiles", false);
-  };
-
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <button onClick={startQuick} className="btn-primary" style={{ ...btn(), padding: "16px 18px", textAlign: "left", fontWeight: 700, fontSize: 15 }}>
-        ⚡ {lang === "en" ? "Quick practice" : "Práctica rápida"}
-        <div style={{ fontSize: 12.5, fontWeight: 400, opacity: 0.9, marginTop: 3 }}>
-          {lang === "en" ? "A fast mix from verbs you know — under 2 minutes." : "Una mezcla rápida de verbos que conoces — menos de 2 minutos."}
-        </div>
-      </button>
-      <button onClick={startReview} disabled={weakCount === 0} className="btn-secondary" style={{ ...btn(), padding: "16px 18px", textAlign: "left", fontWeight: 700, fontSize: 15, opacity: weakCount === 0 ? 0.55 : 1 }}>
-        🎯 {lang === "en" ? "Review weak spots" : "Repasar puntos débiles"}
-        <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--color-text-secondary)", marginTop: 3 }}>
-          {weakCount === 0
-            ? (lang === "en" ? "No weak spots yet — keep practising!" : "Aún no hay puntos débiles — ¡sigue practicando!")
-            : (lang === "en" ? `Focus on the ${weakCount} forms you miss most.` : `Enfócate en las ${weakCount} formas que más fallas.`)}
-        </div>
+        {startLabel}
       </button>
     </div>
   );

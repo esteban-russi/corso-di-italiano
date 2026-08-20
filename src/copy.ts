@@ -155,6 +155,56 @@ export const COPY = {
     en: "Unit {current} of {total}",
     es: "Unidad {current} de {total}",
   },
+  "entry.reviewTitle": {
+    en: "Review what you know",
+    es: "Repasa lo que sabes",
+  },
+  "entry.reviewBody": {
+    en: "You have finished the path. Practise any of it again.",
+    es: "Has terminado el camino. Practica cualquier parte otra vez.",
+  },
+  "entry.back": {
+    en: "Back",
+    es: "Volver",
+  },
+  "entry.level": {
+    en: "Level {level}",
+    es: "Nivel {level}",
+  },
+
+  // --- Choose ---------------------------------------------------------------
+  "choose.searchPlaceholder": {
+    en: "Search verbs",
+    es: "Buscar verbos",
+  },
+  "choose.noResults": {
+    en: "No verbs match that.",
+    es: "Ningún verbo coincide.",
+  },
+  "choose.chooseVerbs": {
+    en: "Choose what to practise",
+    es: "Elige qué practicar",
+  },
+  "choose.chooseTense": {
+    en: "Choose a tense",
+    es: "Elige un tiempo",
+  },
+  "choose.startOne": {
+    en: "Practise {verb}",
+    es: "Practicar {verb}",
+  },
+  "choose.startMany": {
+    en: "Start with {count} verbs",
+    es: "Empezar con {count} verbos",
+  },
+  "choose.pickSomething": {
+    en: "Pick at least one verb",
+    es: "Elige al menos un verbo",
+  },
+  "choose.clear": {
+    en: "Clear",
+    es: "Limpiar",
+  },
 } as const satisfies Record<string, Entry>;
 
 export type CopyId = keyof typeof COPY;
