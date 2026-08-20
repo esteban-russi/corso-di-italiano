@@ -4,7 +4,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { StreakProvider } from "./context/StreakContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import type { Lesson } from "./curriculum/types";
-import { btn, card } from "./utils";
+import { btn, card, onPrimary } from "./utils";
 import LangToggle from "./components/LangToggle";
 import LanguageGate from "./components/LanguageGate";
 import MainMenu from "./components/MainMenu";
@@ -61,14 +61,14 @@ function AppContent() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22, padding: "14px 18px", background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-primary) 70%)", borderRadius: 14, border: "1px solid var(--color-border-tertiary)", boxShadow: "var(--shadow-sm)" }}>
-        <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 12, background: "var(--color-primary)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, boxShadow: "var(--shadow-md)" }}>🇮🇹</div>
+        <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 12, ...onPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, boxShadow: "var(--shadow-md)" }}>🇮🇹</div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 8 }}>
             Corso di Italiano
             <span aria-hidden="true" style={{ display: "inline-flex", borderRadius: 3, overflow: "hidden" }}>
-              <span style={{ width: 5, height: 12, background: "#009246" }} />
-              <span style={{ width: 5, height: 12, background: "#fff", border: "0.5px solid var(--color-border-tertiary)" }} />
-              <span style={{ width: 5, height: 12, background: "#CE2B37" }} />
+              <span style={{ width: 5, height: 12, background: "var(--color-flag-green)" }} />
+              <span style={{ width: 5, height: 12, background: "var(--color-flag-white)", border: "0.5px solid var(--color-border-tertiary)" }} />
+              <span style={{ width: 5, height: 12, background: "var(--color-flag-red)" }} />
             </span>
           </div>
           <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>{subtitle[section]}</div>

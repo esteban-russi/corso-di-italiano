@@ -113,7 +113,11 @@ cp .env.example .env          # set GEMINI_API_KEY
 
 npm run start                 # Node server on :8080 — serves dist/ + /api, auto-loads .env
 npm run dev                   # Vite dev server (HMR), proxies /api → :8080
-npm run build                 # tsc --noEmit, then vite build → dist/
+npm test                      # Vitest, run once
+npm run test:watch            # Vitest, watch mode
+npm run typecheck             # tsc on src/, then tsc -p tsconfig.server.json on server/
+npm run check                 # typecheck + test
+npm run build                 # check, then vite build → dist/
 npm run serve                 # build + start (production-like, single process)
 
 make docker                   # build image, run on :8080 with $GEMINI_API_KEY
@@ -123,9 +127,18 @@ make deploy                   # Cloud Build → Artifact Registry → Cloud Run
 **Local development needs two processes**: `npm run start` and `npm run dev` in separate
 terminals. Without the Node server everything works except the Conversation section.
 
-**There is no test suite and no linter.** `npm run build` (which runs `tsc` first) is the only
-automated check — run it after changes. `tsconfig.json` only includes `src/`, so
-`server/*.mjs` and the legacy root `class.tsx` are never type-checked.
+**Automated checks**: `npm run build` runs `npm run check` (type-check + tests) before
+bundling, so a broken test fails the build and the deploy. CI runs the same thing plus a
+gzipped-JS bundle budget. There is still no linter — deliberately; the guards that matter are
+tests (see `src/designTokens.test.ts`).
+
+`tsconfig.json` only includes `src/`; `server/*.mjs` is type-checked separately by
+`tsconfig.server.json` (`checkJs`, `noImplicitAny` off as a stopgap until `server/` becomes
+TypeScript with auth). The legacy root `class.tsx` is still never type-checked.
+
+Tests live beside their subject as `*.test.ts` (`server/*.test.mjs` for the server) and run in
+a **node** environment — no jsdom. Storage loaders are tested against the stub in
+`src/test/localStorageStub.ts`; anything drawing on `Math.random` must seed it.
 
 ## Architecture
 
@@ -187,8 +200,11 @@ there is no server-side session.
 - **Styling**: inline `React.CSSProperties` over CSS custom properties defined in `index.html`.
   No CSS files, no UI library, no CSS-in-JS. Light/dark palettes switch on `data-theme` set by
   `ThemeContext`. Shared style objects (`btn`, `card`, `row`, `sub`) live in `src/utils.tsx`.
-  Always use tokens (`var(--color-*)`), never literal colors — the exception is the fixed
-  correction-banner palette in `formatMessage`.
+  **Always use tokens (`var(--color-*)`), never literal colors — there are now no exceptions**,
+  and `src/designTokens.test.ts` fails the build on any hex, `rgb()` or CSS named colour in
+  `src/`. Add the token to *both* palettes in `index.html`; the same test enforces
+  light/dark symmetry. Primitives beyond `btn`/`card`/`row`/`sub`: `onPrimary`, `scrim`,
+  `modalPanel`, `badge`.
 - **Bilingual UI**: mostly inline `lang === "en" ? … : …` ternaries; `T` / `t` helpers exist in
   `LangContext`. Italian appears only as *content* and flavor words (`Bravo!`, `Quasi!`), never
   as an interface language.

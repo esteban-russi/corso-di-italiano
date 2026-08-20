@@ -6,7 +6,7 @@ import { UNITS } from "../curriculum/path";
 import { VERBS } from "../curriculum/verbs";
 import { generateLesson } from "../curriculum/lesson";
 import { TENSES, TENSE_LABEL, type Lesson, type Tense, type Unit } from "../curriculum/types";
-import { btn } from "../utils";
+import { btn, onPrimary } from "../utils";
 
 type Mode = "path" | "pick" | "quick";
 
@@ -112,7 +112,7 @@ function PathView({ nextIndex, onStartUnit }: { nextIndex: number; onStartUnit: 
               </span>
             </span>
             {isNext && !done && (
-              <span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 10px", borderRadius: 999, background: "var(--color-primary)", color: "#fff" }}>
+              <span style={{ fontSize: 11.5, fontWeight: 700, padding: "4px 10px", borderRadius: 999, ...onPrimary }}>
                 {lang === "en" ? "START" : "EMPEZAR"}
               </span>
             )}

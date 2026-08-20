@@ -1,5 +1,6 @@
 import { useLang } from "../context/LangContext";
 import type { Lang } from "../types";
+import { modalPanel, scrim } from "../utils";
 
 /**
  * First-launch overlay: pick the interface language (English or Spanish).
@@ -16,13 +17,7 @@ export default function LanguageGate() {
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(15, 23, 42, 0.55)",
-        backdropFilter: "blur(3px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        ...scrim(3),
         zIndex: 2000,
         padding: 16,
       }}
@@ -30,14 +25,10 @@ export default function LanguageGate() {
       <div
         className="fade-in"
         style={{
-          background: "var(--color-background-primary)",
-          borderRadius: 18,
+          ...modalPanel(18),
           padding: "34px 30px 28px",
           maxWidth: 400,
           width: "100%",
-          textAlign: "center",
-          boxShadow: "var(--shadow-lg)",
-          border: "1px solid var(--color-border-tertiary)",
         }}
       >
         <div style={{ fontSize: 40, marginBottom: 6 }} aria-hidden="true">

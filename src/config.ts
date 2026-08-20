@@ -1,21 +1,18 @@
 // App-wide constants: verb badge colors and conversation topics.
 
-const PALETTE: { bg: string; color: string }[] = [
-  { bg: "#EEEDFE", color: "#3C3489" },
-  { bg: "#E1F5EE", color: "#0F6E56" },
-  { bg: "#FAECE7", color: "#993C1D" },
-  { bg: "#E6F1FB", color: "#185FA5" },
-  { bg: "#FFF8E6", color: "#6B5A00" },
-  { bg: "#F3E8FF", color: "#6B21A8" },
-  { bg: "#FCE7F3", color: "#9D174D" },
-  { bg: "#ECFDF5", color: "#065F46" },
-];
+/**
+ * Categorical badge palette. The values live in index.html as
+ * --color-badge-N-bg / --color-badge-N-fg so the redesign (and dark mode) can
+ * restyle them in one place; only the count is knowledge held here.
+ */
+const BADGE_COUNT = 8;
 
 /** Stable per-verb color derived from the id, so any verb gets a consistent badge. */
 export function verbColor(id: string): { bg: string; color: string } {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
+  const slot = (h % BADGE_COUNT) + 1;
+  return { bg: `var(--color-badge-${slot}-bg)`, color: `var(--color-badge-${slot}-fg)` };
 }
 
 export type Topic = { id: string; emoji: string; it: string; en: string; es: string };

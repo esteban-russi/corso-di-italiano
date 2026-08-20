@@ -4,7 +4,7 @@ import { useProfile } from "../context/ProfileContext";
 import { TOPICS, verbColor } from "../config";
 import { VERBS, getVerb } from "../curriculum/verbs";
 import { UNITS } from "../curriculum/path";
-import { btn, formatMessage } from "../utils";
+import { badge, btn, formatMessage } from "../utils";
 
 type Msg = { role: "marco" | "user"; text: string };
 const STORE = "corso-convo";
@@ -110,7 +110,7 @@ export default function Conversation() {
           </span>
           {focusVerbs.map((v) => {
             const c = verbColor(v);
-            return <span key={v} style={{ padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: c.bg, color: c.color }}>{getVerb(v)?.infinitive}</span>;
+            return <span key={v} style={{ ...badge(c), padding: "2px 10px", fontSize: 12 }}>{getVerb(v)?.infinitive}</span>;
           })}
           <button onClick={() => setEditVerbs((e) => !e)} className="btn-ghost" style={{ ...btn(), padding: "3px 10px", fontSize: 12 }}>
             {editVerbs ? (lang === "en" ? "Done" : "Listo") : (lang === "en" ? "Change" : "Cambiar")}
@@ -160,7 +160,7 @@ export default function Conversation() {
                 <div style={{
                   padding: "10px 14px", borderRadius: 14, fontSize: 14, lineHeight: 1.55,
                   background: m.role === "user" ? "var(--color-primary)" : "var(--color-background-secondary)",
-                  color: m.role === "user" ? "#fff" : "var(--color-text-primary)",
+                  color: m.role === "user" ? "var(--color-on-primary)" : "var(--color-text-primary)",
                   border: m.role === "user" ? "none" : "1px solid var(--color-border-tertiary)",
                 }}>
                   {m.role === "marco" ? formatMessage(m.text) : m.text}
