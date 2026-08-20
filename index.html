@@ -31,6 +31,10 @@
 
         /* Text/icon colour on a filled primary surface. */
         --color-on-primary: #ffffff;
+        /* Text/icon colour on a filled danger surface. */
+        --color-on-danger: #ffffff;
+        /* Lift under a hovered primary button. */
+        --shadow-primary-hover: 0 8px 22px rgba(37, 99, 235, 0.28);
         /* Modal and full-screen overlay wash. */
         --color-scrim: rgba(15, 23, 42, 0.55);
 
@@ -92,6 +96,9 @@
         /* The dark primary (#60a5fa) is light: white text on it fails contrast,
            so the on-primary colour flips to near-black here. */
         --color-on-primary: #0b1220;
+        /* Same reason as on-primary: the dark danger colour is a light red. */
+        --color-on-danger: #2a0a0a;
+        --shadow-primary-hover: 0 8px 22px rgba(0, 0, 0, 0.5);
         --color-scrim: rgba(0, 0, 0, 0.65);
 
         --color-accent-verbs: #60a5fa;
@@ -126,19 +133,41 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         font-family: var(--font-sans);
+        /* Mobile browser chrome makes 100vh taller than the visible area, so the
+           page ends up scrollable by the height of the toolbar. dvh tracks the
+           real viewport; the vh line stays as the fallback. */
+        min-height: 100vh;
+        min-height: 100dvh;
+        overscroll-behavior-y: contain;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
         background:
           radial-gradient(1200px 600px at 10% -10%, var(--color-primary-softer), transparent 60%),
           radial-gradient(900px 500px at 110% 10%, var(--color-background-tint), transparent 55%),
           var(--color-background-secondary);
         color: var(--color-text-primary);
-        min-height: 100vh;
         -webkit-font-smoothing: antialiased;
       }
-      #root { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+      #root {
+        max-width: 720px;
+        margin: 0 auto;
+        /* Respect the notch and the home indicator when installed. */
+        padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+          calc(48px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      }
+      @media (max-width: 480px) {
+        #root { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+      }
       .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
       .tricolore {
         height: 4px;
-        background: linear-gradient(90deg, #009246 33.3%, #fff 33.3%, #fff 66.6%, #CE2B37 66.6%);
+        background: linear-gradient(
+          90deg,
+          var(--color-flag-green) 33.3%,
+          var(--color-flag-white) 33.3%,
+          var(--color-flag-white) 66.6%,
+          var(--color-flag-red) 66.6%
+        );
         position: fixed;
         top: 0;
         left: 0;
@@ -149,6 +178,9 @@
       /* Friendly buttons --------------------------------------------------- */
       button {
         font-family: inherit;
+        /* Removes the 300ms tap delay and the grey flash on iOS. */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
         transition:
           background-color 0.18s ease,
           border-color 0.18s ease,
@@ -164,13 +196,13 @@
 
       .btn-primary {
         background: var(--color-primary) !important;
-        color: #fff !important;
+        color: var(--color-on-primary) !important;
         border: none !important;
         box-shadow: var(--shadow-md);
       }
       .btn-primary:not(:disabled):hover {
         background: var(--color-primary-hover) !important;
-        box-shadow: 0 8px 22px rgba(37, 99, 235, 0.28);
+        box-shadow: var(--shadow-primary-hover);
       }
       .btn-primary:not(:disabled):active {
         background: var(--color-primary-active) !important;
@@ -215,7 +247,7 @@
       }
       .btn-danger-solid {
         background: var(--color-danger) !important;
-        color: #fff !important;
+        color: var(--color-on-danger) !important;
         border: none !important;
         box-shadow: var(--shadow-sm);
       }

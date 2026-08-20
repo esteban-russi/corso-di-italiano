@@ -116,3 +116,33 @@ describe("token layer", () => {
     }
   });
 });
+
+describe("no literal colours in index.html outside the token blocks", () => {
+  const html = readFileSync(INDEX_HTML, "utf8");
+
+  /** The stylesheet with the two token-declaration blocks removed. */
+  function styleRulesOnly(): string {
+    let rest = html;
+    for (const selector of [":root", '[data-theme="dark"]']) {
+      const start = rest.indexOf(selector);
+      if (start === -1) continue;
+      const open = rest.indexOf("{", start);
+      const close = rest.indexOf("}", open);
+      rest = rest.slice(0, start) + rest.slice(close + 1);
+    }
+    return rest;
+  }
+
+  it("declares colours only as tokens, never inline in a rule", () => {
+    // The token blocks are where literals belong. Everywhere else in the
+    // stylesheet — .btn-primary, .tricolore — must reference var(--color-*),
+    // or dark mode silently inherits the light value.
+    expect(styleRulesOnly().match(HEX_OR_RGB) ?? []).toEqual([]);
+  });
+
+  it("still sees the stylesheet after stripping the token blocks", () => {
+    // Guards against the stripper eating the whole file and passing vacuously.
+    expect(styleRulesOnly()).toContain(".btn-primary");
+    expect(styleRulesOnly()).not.toContain("--color-on-primary:");
+  });
+});
