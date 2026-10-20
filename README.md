@@ -201,6 +201,20 @@ make docker     # build the image and run it on :8080 with your GEMINI_API_KEY
 ```
 
 ### Deploy to Cloud Run
+
+#### Automated (CI/CD)
+Every push or merged PR to `main` automatically triggers the [CI/CD workflow](.github/workflows/ci.yml).
+The pipeline runs:
+1. `check`: Type-check, test suite, Vite build, and bundle budget check (< 200 KB gzipped).
+2. `deploy`: Authenticates via **Workload Identity Federation (WIF)**, builds and caches the Docker container image, pushes it to Google Artifact Registry, and deploys the new revision to Cloud Run.
+
+To initialize Workload Identity Federation in GCP, run:
+```bash
+./scripts/setup-gcp-wif.sh
+```
+Then add the printed secret values (`WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`, and optionally `GEMINI_API_KEY`) to your GitHub repository secrets (**Settings → Secrets and variables → Actions**).
+
+#### Manual (Makefile)
 ```bash
 make deploy     # Cloud Build → Artifact Registry → gcloud run deploy
 ```
