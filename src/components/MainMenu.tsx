@@ -46,21 +46,21 @@ export default function MainMenu({ onSelectSection }: { onSelectSection: (s: Sec
 
       <MenuCard
         emoji="📚"
-        accent="#2563eb"
+        accent="var(--color-accent-verbs)"
         title={lang === "en" ? "Verbs" : "Verbos"}
         body={lang === "en" ? "Short, guided lessons that build verb mastery." : "Lecciones cortas y guiadas para dominar los verbos."}
         onClick={() => onSelectSection("verbs-learning")}
       />
       <MenuCard
         emoji="💬"
-        accent="#8b5cf6"
+        accent="var(--color-accent-conversation)"
         title={lang === "en" ? "Conversation" : "Conversación"}
         body={lang === "en" ? "Chat with Marco, your Italian friend, to use verbs for real." : "Habla con Marco, tu amigo italiano, y usa los verbos de verdad."}
         onClick={() => onSelectSection("conversation")}
       />
       <MenuCard
         emoji="⚙️"
-        accent="#64748b"
+        accent="var(--color-accent-settings)"
         title={lang === "en" ? "Settings" : "Ajustes"}
         body={lang === "en" ? "Language, name, daily goal, topics and theme." : "Idioma, nombre, meta diaria, temas y tema visual."}
         onClick={() => onSelectSection("settings")}

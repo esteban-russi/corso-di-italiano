@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
-type StreakData = {
+export type StreakData = {
   currentStreak: number;
   lastActivityDate: string | null; // ISO date YYYY-MM-DD (local)
   longestStreak: number;
@@ -60,7 +60,8 @@ function daysBetween(from: string, to: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-function loadInitial(): StreakData {
+/** Read the stored streak, resetting a lapsed one. Exported for tests. */
+export function loadInitial(): StreakData {
   let data = EMPTY;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);

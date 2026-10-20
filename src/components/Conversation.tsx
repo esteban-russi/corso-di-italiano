@@ -4,10 +4,25 @@ import { useProfile } from "../context/ProfileContext";
 import { TOPICS, verbColor } from "../config";
 import { VERBS, getVerb } from "../curriculum/verbs";
 import { UNITS } from "../curriculum/path";
-import { btn, formatMessage } from "../utils";
+import { badge, btn, formatMessage } from "../utils";
+import { useCopy } from "../copy";
+import { CONVERSATION_OPENERS, CONVERSATION_REPLIES, marcoGreeting } from "../content/italian";
 
-type Msg = { role: "marco" | "user"; text: string };
+type Msg = {
+  role: "marco" | "user";
+  text: string;
+  /** Marco's line in the learner's language, fetched with the reply and hidden until asked for. */
+  translation?: string;
+};
 const STORE = "corso-convo";
+
+/**
+ * Turns of history sent upstream. The full thread was previously re-sent every
+ * turn, so cost grew quadratically with conversation length — untenable on a
+ * free public tier (docs/01-conversation-core.md D-01-5). The window keeps
+ * recent context, which is what the model actually needs.
+ */
+const HISTORY_WINDOW = 20;
 
 /** Default focus verbs: those the learner has practised, else common ones. */
 function defaultFocusVerbs(completedUnits: string[]): string[] {
@@ -26,6 +41,7 @@ function loadSaved(): { msgs: Msg[]; verbs: string[]; topic: string } | null {
 
 export default function Conversation() {
   const { lang } = useLang();
+  const c = useCopy();
   const profile = useProfile();
   const saved = useMemo(loadSaved, []);
 
@@ -35,20 +51,33 @@ export default function Conversation() {
   const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [shownTranslations, setShownTranslations] = useState<Set<number>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const toggleTranslation = (index: number) =>
+    setShownTranslations((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
 
   const started = msgs.length > 0;
 
-  // Persist and auto-scroll.
   useEffect(() => {
     localStorage.setItem(STORE, JSON.stringify({ msgs, verbs: focusVerbs, topic }));
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, focusVerbs, topic]);
+
+  // Follow the bottom of the thread. Revealing a translation makes a message
+  // taller, so it has to scroll too or the text it just revealed sits clipped
+  // below the fold — which defeats the point of asking for it.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [msgs, shownTranslations]);
 
   const greeting = (): string => {
     const list = focusVerbs.map((v) => getVerb(v)?.infinitive).filter(Boolean).join(", ");
-    const who = profile.name ? ` ${profile.name}` : "";
-    return `Ciao${who}! 😊 Sono Marco, il tuo amico italiano. Oggi possiamo usare i verbi **${list}**. Di cosa vuoi parlare?`;
+    return marcoGreeting(list, profile.name);
   };
 
   const send = async (text: string) => {
@@ -71,26 +100,40 @@ export default function Conversation() {
           topic: TOPICS.find((t) => t.id === topic)?.it ?? "",
           name: profile.name,
           weakVerbs: [...new Set(profile.weakKeys().map((k) => k.split(":")[0]))].map((id) => getVerb(id)?.infinitive ?? id).slice(0, 6),
-          messages: history.map((m) => ({ role: m.role === "marco" ? "model" : "user", text: m.text })),
+          messages: history
+            .slice(-HISTORY_WINDOW)
+            .map((m) => ({ role: m.role === "marco" ? "model" : "user", text: m.text })),
         }),
       });
       const data = await res.json();
-      setMsgs((m) => [...m, { role: "marco", text: data.reply || "..." }]);
+      // Server errors arrive as a code, not as prose: interface text is always
+      // rendered in the learner's language (see docs/04-interface-language.md).
+      const text =
+        data.error === "rate_limited"
+          ? c("state.rateLimited")
+          : data.error
+            ? c("state.serverUnavailable")
+            : data.reply || "...";
+      // A failed turn has no translation to offer; the message is already in
+      // the learner's language.
+      setMsgs((m) => [...m, { role: "marco", text, translation: data.error ? "" : data.translation ?? "" }]);
     } catch {
-      setMsgs((m) => [...m, { role: "marco", text: lang === "en" ? "(Connection error — try again!)" : "(Error de conexión — ¡inténtalo de nuevo!)" }]);
+      setMsgs((m) => [...m, { role: "marco", text: c("state.connectionError") }]);
     }
     setLoading(false);
   };
 
   const start = () => { setMsgs([{ role: "marco", text: greeting() }]); };
-  const restart = () => { setMsgs([]); localStorage.removeItem(STORE); };
+  const restart = () => {
+    setMsgs([]);
+    setShownTranslations(new Set());
+    localStorage.removeItem(STORE);
+  };
 
   const toggleFocus = (id: string) =>
     setFocusVerbs((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 6 ? [...p, id] : p));
 
-  const suggestions: string[] = started
-    ? ["Come si dice...?", "Dammi una sfida! 💪", lang === "en" ? "Non ho capito, puoi ripetere?" : "Non ho capito, puoi ripetere?"]
-    : ["Ciao Marco! Come stai?", "Raccontami del tuo weekend", "Cosa fai oggi?"];
+  const suggestions: string[] = started ? CONVERSATION_REPLIES : CONVERSATION_OPENERS;
 
   return (
     <div>
@@ -102,7 +145,7 @@ export default function Conversation() {
           </span>
           {focusVerbs.map((v) => {
             const c = verbColor(v);
-            return <span key={v} style={{ padding: "2px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600, background: c.bg, color: c.color }}>{getVerb(v)?.infinitive}</span>;
+            return <span key={v} style={{ ...badge(c), padding: "2px 10px", fontSize: 12 }}>{getVerb(v)?.infinitive}</span>;
           })}
           <button onClick={() => setEditVerbs((e) => !e)} className="btn-ghost" style={{ ...btn(), padding: "3px 10px", fontSize: 12 }}>
             {editVerbs ? (lang === "en" ? "Done" : "Listo") : (lang === "en" ? "Change" : "Cambiar")}
@@ -147,18 +190,49 @@ export default function Conversation() {
       ) : (
         <>
           <div ref={scrollRef} style={{ minHeight: 220, maxHeight: 380, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, padding: "4px 0" }}>
-            {msgs.map((m, i) => (
-              <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "85%" }}>
-                <div style={{
-                  padding: "10px 14px", borderRadius: 14, fontSize: 14, lineHeight: 1.55,
-                  background: m.role === "user" ? "var(--color-primary)" : "var(--color-background-secondary)",
-                  color: m.role === "user" ? "#fff" : "var(--color-text-primary)",
-                  border: m.role === "user" ? "none" : "1px solid var(--color-border-tertiary)",
-                }}>
-                  {m.role === "marco" ? formatMessage(m.text) : m.text}
+            {msgs.map((m, i) => {
+              // Only Marco's Italian needs translating: the learner wrote their
+              // own messages, so translating those teaches nothing.
+              const canTranslate = m.role === "marco" && m.translation !== undefined;
+              const shown = shownTranslations.has(i);
+              return (
+                <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "85%" }}>
+                  <div style={{
+                    padding: "10px 14px", borderRadius: 14, fontSize: 14, lineHeight: 1.55,
+                    background: m.role === "user" ? "var(--color-primary)" : "var(--color-background-secondary)",
+                    color: m.role === "user" ? "var(--color-on-primary)" : "var(--color-text-primary)",
+                    border: m.role === "user" ? "none" : "1px solid var(--color-border-tertiary)",
+                  }}>
+                    {m.role === "marco" ? formatMessage(m.text) : m.text}
+                  </div>
+                  {canTranslate && (
+                    <button
+                      onClick={() => toggleTranslation(i)}
+                      className="btn-ghost"
+                      aria-expanded={shown}
+                      style={{
+                        ...btn(), padding: "2px 8px", marginTop: 4, fontSize: 11.5,
+                        fontWeight: 600, color: "var(--color-text-secondary)", border: "none",
+                        background: "transparent",
+                      }}
+                    >
+                      {shown ? c("chat.hideTranslation") : c("chat.translate")}
+                    </button>
+                  )}
+                  {canTranslate && shown && (
+                    <div className="fade-in" style={{
+                      marginTop: 2, padding: "8px 12px", borderRadius: 10, fontSize: 13,
+                      lineHeight: 1.55, fontStyle: m.translation ? "normal" : "italic",
+                      background: "var(--color-background-tint)",
+                      color: "var(--color-text-secondary)",
+                      border: "1px solid var(--color-border-tertiary)",
+                    }}>
+                      {m.translation || c("chat.translationUnavailable")}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading && (
               <div style={{ alignSelf: "flex-start", fontSize: 13, color: "var(--color-text-secondary)", fontStyle: "italic", padding: "6px 10px" }}>
                 Marco {lang === "en" ? "is typing…" : "está escribiendo…"}

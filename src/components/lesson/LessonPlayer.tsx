@@ -1,19 +1,25 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLang } from "../../context/LangContext";
 import { useStreak } from "../../context/StreakContext";
 import { useProfile } from "../../context/ProfileContext";
 import { verbColor } from "../../config";
 import { getVerb } from "../../curriculum/verbs";
 import type { Lesson } from "../../curriculum/types";
-import { btn, card } from "../../utils";
+import { badge, btn, card, modalPanel, scrim } from "../../utils";
 import ConjTable from "../ConjTable";
 import { FlashCard, ChoiceCard, CompleteCard, MatchCard, IntroCard, type LessonResult } from "./LessonCards";
 
 export default function LessonPlayer({
-  lesson, title, onExit, onFinish,
+  lesson, title, backSignal = 0, onExit, onFinish,
 }: {
   lesson: Lesson;
   title: string;
+  /**
+   * Incremented by App when the system back gesture is caught mid-lesson.
+   * Opens the same confirmation as the exit button, so progress in an
+   * abandoned lesson is never discarded without asking.
+   */
+  backSignal?: number;
   onExit: () => void;
   onFinish: (errors: number, startTime: number) => void;
 }) {
@@ -27,6 +33,10 @@ export default function LessonPlayer({
   const errors = useRef(0);
   const misses = useRef<string[]>([]);
   const hits = useRef<string[]>([]);
+
+  useEffect(() => {
+    if (backSignal > 0) setShowExit(true);
+  }, [backSignal]);
 
   const items = lesson.items;
   const item = items[step];
@@ -56,7 +66,7 @@ export default function LessonPlayer({
         {lesson.verbIds.map((v) => {
           const c = verbColor(v);
           return (
-            <span key={v} style={{ padding: "3px 12px", borderRadius: 999, fontWeight: 600, fontSize: 12.5, background: c.bg, color: c.color }}>
+            <span key={v} style={{ ...badge(c), padding: "3px 12px", fontSize: 12.5 }}>
               {getVerb(v)?.infinitive ?? v}
             </span>
           );
@@ -104,8 +114,8 @@ export default function LessonPlayer({
 
       {/* Exit confirmation */}
       {showExit && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.55)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div className="fade-in" style={{ background: "var(--color-background-primary)", borderRadius: 16, padding: "30px 32px 26px", maxWidth: 380, width: "90%", textAlign: "center", boxShadow: "var(--shadow-lg)", border: "1px solid var(--color-border-tertiary)" }}>
+        <div style={{ ...scrim(2), zIndex: 1000 }}>
+          <div className="fade-in" style={{ ...modalPanel(16), padding: "30px 32px 26px", maxWidth: 380, width: "90%" }}>
             <div aria-hidden="true" style={{ fontSize: 40, marginBottom: 10 }}>👋</div>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: "var(--color-text-primary)" }}>
               {lang === "en" ? "Leave the lesson?" : "¿Salir de la lección?"}

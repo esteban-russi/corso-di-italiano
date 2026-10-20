@@ -1,0 +1,23 @@
+{
+  // Stopgap type-checking for the dependency-free Node server, which the main
+  // tsconfig deliberately excludes. See docs/15-quality-and-testing.md D-15-5:
+  // `server/` migrates to TypeScript proper when auth lands. Until then, run
+  // checkJs without noImplicitAny so real defects (typos, bad property access,
+  // wrong arity, possibly-undefined) are caught without annotating every
+  // parameter in plain JS.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["server/**/*.mjs"],
+  "exclude": ["server/**/*.test.mjs"]
+}

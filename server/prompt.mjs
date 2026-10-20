@@ -4,6 +4,29 @@
 
 const LANG_NAME = { en: "English", es: "Spanish" };
 
+/**
+ * Marker separating Marco's Italian reply from its translation. Asking for the
+ * translation in the same turn costs one call instead of two, so a confused
+ * learner gets it instantly with no spinner (docs/01-conversation-core.md
+ * D-01-1b). Chosen to be something the model will not produce by accident.
+ */
+export const TRANSLATION_MARKER = "[[TRANSLATION]]";
+
+/**
+ * Split a raw model reply into the Italian message and its translation. The
+ * marker is optional: an older or forgetful response degrades to no
+ * translation rather than leaking the marker into the thread.
+ */
+export function splitTranslation(raw) {
+  const text = String(raw ?? "");
+  const at = text.indexOf(TRANSLATION_MARKER);
+  if (at === -1) return { reply: text.trim(), translation: "" };
+  return {
+    reply: text.slice(0, at).trim(),
+    translation: text.slice(at + TRANSLATION_MARKER.length).trim(),
+  };
+}
+
 export function buildChatPrompt({ uiLang = "en", verbs = [], topic = "", name = "", weakVerbs = [] }) {
   const native = LANG_NAME[uiLang] ?? "English";
   const verbList = verbs.length ? verbs.join(", ") : "essere, avere, fare";
@@ -50,6 +73,14 @@ CORRECTIONS (in ${native}):
 STYLE:
 - Short, natural replies (2-5 sentences). Vary your tone and expressions.
 - Be warm, relaxed and real.
+
+TRANSLATION (required, every single message):
+- After your Italian message, add a final line that begins exactly with ${TRANSLATION_MARKER}
+  followed by a natural ${native} translation of what you just said.
+- Translate only your Italian conversation text. Do not re-translate the 📝 correction
+  lines, which are already in ${native}.
+- The student never sees this line unless they ask for it, so never refer to it,
+  and never put anything after it.
 
 FINAL GOAL:
 The student should feel they are in a real conversation with an Italian friend, not in a grammar lesson.`;

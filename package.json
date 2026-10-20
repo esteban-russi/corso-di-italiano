@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "vite build && playwright test",
+    "typecheck": "tsc && tsc -p tsconfig.server.json && tsc -p tsconfig.e2e.json",
+    "check": "npm run typecheck && npm run test",
+    "build": "npm run check && vite build",
     "preview": "vite preview",
     "start": "node --env-file-if-exists=.env server/index.mjs",
     "serve": "npm run build && npm run start"
@@ -15,10 +20,13 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.4.1",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^4.1.11"
   }
 }

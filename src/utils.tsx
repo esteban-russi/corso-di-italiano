@@ -36,6 +36,44 @@ export const row: React.CSSProperties = {
   border: "1px solid var(--color-border-tertiary)",
 };
 
+/**
+ * Filled-primary surface: the one place that knows what colour sits on top of
+ * --color-primary. Used by the header tile, the language toggle, the path
+ * START pill and the learner's chat bubble.
+ */
+export const onPrimary: React.CSSProperties = {
+  background: "var(--color-primary)",
+  color: "var(--color-on-primary)",
+};
+
+/** Full-screen wash behind a modal. `blur` in px; 0 disables the backdrop filter. */
+export const scrim = (blur = 3): React.CSSProperties => ({
+  position: "fixed",
+  inset: 0,
+  background: "var(--color-scrim)",
+  backdropFilter: blur ? `blur(${blur}px)` : undefined,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+/** Centred dialog panel that sits inside a `scrim`. */
+export const modalPanel = (radius = 16): React.CSSProperties => ({
+  background: "var(--color-background-primary)",
+  borderRadius: radius,
+  textAlign: "center",
+  boxShadow: "var(--shadow-lg)",
+  border: "1px solid var(--color-border-tertiary)",
+});
+
+/** Small categorical chip, coloured by `verbColor` (see config.ts). */
+export const badge = (tone: { bg: string; color: string }): React.CSSProperties => ({
+  background: tone.bg,
+  color: tone.color,
+  borderRadius: 999,
+  fontWeight: 600,
+});
+
 export const sub: React.CSSProperties = {
   fontSize: 14,
   color: "var(--color-text-secondary)",
@@ -51,6 +89,11 @@ export function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/** "ok" for a confirmation line, "note" for a correction. */
+function correctionTone(lines: string[]): "ok" | "note" {
+  return lines.some((l) => l.startsWith("✅")) ? "ok" : "note";
 }
 
 export function formatMessage(text: string): ReactNode {
@@ -97,12 +140,12 @@ export function formatMessage(text: string): ReactNode {
           style={{
             marginBottom: 10,
             padding: "8px 12px",
-            background: correctionLines.some((l) => l.startsWith("✅")) ? "#E8F5E9" : "#FFF8E6",
-            border: `0.5px solid ${correctionLines.some((l) => l.startsWith("✅")) ? "#A5D6A7" : "#E8D48A"}`,
+            background: `var(--color-correction-${correctionTone(correctionLines)}-bg)`,
+            border: `0.5px solid var(--color-correction-${correctionTone(correctionLines)}-border)`,
             borderRadius: 8,
             fontSize: 13,
             lineHeight: 1.6,
-            color: correctionLines.some((l) => l.startsWith("✅")) ? "#2E7D32" : "#6B5A00",
+            color: `var(--color-correction-${correctionTone(correctionLines)}-text)`,
           }}
         >
           {correctionLines.map((line, i) => (

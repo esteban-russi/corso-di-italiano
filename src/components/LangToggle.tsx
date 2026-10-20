@@ -30,7 +30,7 @@ export default function LangToggle() {
               fontSize: 12,
               fontWeight: 700,
               background: active ? "var(--color-primary)" : "transparent",
-              color: active ? "#fff" : "var(--color-text-secondary)",
+              color: active ? "var(--color-on-primary)" : "var(--color-text-secondary)",
             }}
           >
             {l === "en" ? "EN" : "ES"}
