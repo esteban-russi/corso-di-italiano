@@ -12,6 +12,7 @@ describe("pathFor", () => {
     expect(pathFor(HOME)).toBe("/");
     expect(pathFor(nav("verbs-learning"))).toBe("/verbs");
     expect(pathFor(nav("conversation"))).toBe("/conversation");
+    expect(pathFor(nav("lab"))).toBe("/lab");
     expect(pathFor(nav("settings"))).toBe("/settings");
   });
 
@@ -28,7 +29,7 @@ describe("pathFor", () => {
 
 describe("navFromPath", () => {
   it("round-trips the section paths", () => {
-    for (const section of ["verbs-learning", "conversation", "settings"] as const) {
+    for (const section of ["verbs-learning", "conversation", "lab", "settings"] as const) {
       expect(navFromPath(pathFor(nav(section)))).toEqual(nav(section));
     }
     expect(navFromPath("/")).toEqual(HOME);

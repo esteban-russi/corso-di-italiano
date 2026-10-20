@@ -1,7 +1,7 @@
 import { useLang } from "../context/LangContext";
 import { useProfile } from "../context/ProfileContext";
 
-type Section = "verbs-learning" | "conversation" | "settings";
+type Section = "verbs-learning" | "conversation" | "lab" | "settings";
 
 function MenuCard({
   emoji, title, body, accent, onClick,
@@ -57,6 +57,13 @@ export default function MainMenu({ onSelectSection }: { onSelectSection: (s: Sec
         title={lang === "en" ? "Conversation" : "Conversación"}
         body={lang === "en" ? "Chat with Marco, your Italian friend, to use verbs for real." : "Habla con Marco, tu amigo italiano, y usa los verbos de verdad."}
         onClick={() => onSelectSection("conversation")}
+      />
+      <MenuCard
+        emoji="🧪"
+        accent="var(--color-primary)"
+        title={lang === "en" ? "AI & Voice Lab" : "Laboratorio de IA y Voz"}
+        body={lang === "en" ? "Evaluate models, speech synthesis, character personas, and latency." : "Evalúa modelos, síntesis de voz, personajes y latencia."}
+        onClick={() => onSelectSection("lab")}
       />
       <MenuCard
         emoji="⚙️"

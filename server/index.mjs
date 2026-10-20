@@ -1,5 +1,6 @@
 // Minimal dependency-free Node server: serves the built SPA from ../dist and
-// proxies POST /api/chat to Gemini, keeping the API key server-side only.
+// proxies POST /api/chat, /api/audio/*, and /api/lab/* to Gemini & audio services,
+// keeping all API keys server-side only.
 
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -8,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { buildChatPrompt, splitTranslation } from "./prompt.mjs";
 import { clientKey, createRateLimiter, limiterConfigFromEnv } from "./rateLimit.mjs";
+import { getProviderStatus, handleSttRequest, handleTtsRequest } from "./audio.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, "..", "dist");
@@ -65,15 +67,18 @@ async function handleChat(req, res) {
       role: m.role === "model" ? "model" : "user",
       parts: [{ text: String(m.text || "") }],
     }));
+    const modelToUse = body.model || GEMINI_MODEL;
+    const temp = typeof body.temperature === "number" ? body.temperature : 0.9;
+
     const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents,
-          generationConfig: { maxOutputTokens: 1000, temperature: 0.9 },
+          generationConfig: { maxOutputTokens: 1000, temperature: temp },
         }),
       }
     );
@@ -84,11 +89,46 @@ async function handleChat(req, res) {
     // the marker never reaches the thread (docs/01-conversation-core.md).
     const { reply, translation } = splitTranslation(raw);
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ reply: reply || "...", translation }));
+    res.end(JSON.stringify({
+      reply: reply || "...",
+      translation,
+      modelUsed: modelToUse,
+      characterId: body.characterId || "marco",
+    }));
   } catch (e) {
     console.error("chat upstream failed:", e);
     return refuse(res, 502, "upstream_failed", "(Connection error — try again!)");
   }
+}
+
+async function handleTts(req, res) {
+  try {
+    const body = JSON.parse((await readBody(req)) || "{}");
+    const result = await handleTtsRequest(body);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(result));
+  } catch (e) {
+    console.error("TTS endpoint failed:", e);
+    return refuse(res, 500, "tts_failed", "Failed to process TTS request");
+  }
+}
+
+async function handleStt(req, res) {
+  try {
+    const body = JSON.parse((await readBody(req)) || "{}");
+    const result = await handleSttRequest(body);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(result));
+  } catch (e) {
+    console.error("STT endpoint failed:", e);
+    return refuse(res, 500, "stt_failed", "Failed to transcribe audio");
+  }
+}
+
+function handleLabProviders(res) {
+  const providers = getProviderStatus();
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ providers }));
 }
 
 async function serveStatic(req, res) {
@@ -115,7 +155,11 @@ async function serveStatic(req, res) {
 }
 
 createServer(async (req, res) => {
-  if (req.method === "POST" && req.url === "/api/chat") return handleChat(req, res);
-  if (req.method === "GET" && req.url === "/api/health") { res.writeHead(200); res.end("ok"); return; }
+  const url = req.url || "/";
+  if (req.method === "POST" && url === "/api/chat") return handleChat(req, res);
+  if (req.method === "POST" && url === "/api/audio/tts") return handleTts(req, res);
+  if (req.method === "POST" && url === "/api/audio/stt") return handleStt(req, res);
+  if (req.method === "GET" && url === "/api/lab/providers") return handleLabProviders(res);
+  if (req.method === "GET" && url === "/api/health") { res.writeHead(200); res.end("ok"); return; }
   return serveStatic(req, res);
 }).listen(PORT, () => console.log(`corso-di-italiano listening on :${PORT}`));

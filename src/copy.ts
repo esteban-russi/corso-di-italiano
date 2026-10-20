@@ -121,6 +121,58 @@ export const COPY = {
     en: "No translation available for this message.",
     es: "No hay traducción disponible para este mensaje.",
   },
+  "chat.playAudio": {
+    en: "Listen",
+    es: "Escuchar",
+  },
+  "chat.stopAudio": {
+    en: "Stop",
+    es: "Detener",
+  },
+  "chat.micStart": {
+    en: "Speak Italian",
+    es: "Hablar en italiano",
+  },
+  "chat.micListening": {
+    en: "Listening…",
+    es: "Escuchando…",
+  },
+  "chat.switchCharacter": {
+    en: "Partner",
+    es: "Compañero",
+  },
+  "chat.scenario": {
+    en: "Scenario",
+    es: "Escenario",
+  },
+  "chat.freeConversation": {
+    en: "Free conversation",
+    es: "Conversación libre",
+  },
+  "chat.recapTitle": {
+    en: "Conversation Recap",
+    es: "Resumen de la Conversación",
+  },
+  "chat.recapSubtitle": {
+    en: "Great practice! Here is what was covered in this session:",
+    es: "¡Gran práctica! Esto fue lo que practicaste en esta sesión:",
+  },
+  "chat.correctionsNoted": {
+    en: "Helpful corrections from your partner:",
+    es: "Correcciones útiles de tu compañero:",
+  },
+  "chat.noCorrections": {
+    en: "Smooth conversation! No major errors recorded.",
+    es: "¡Conversación fluida! No se registraron errores importantes.",
+  },
+  "chat.continueChat": {
+    en: "Continue conversation",
+    es: "Continuar conversación",
+  },
+  "chat.startNew": {
+    en: "New conversation",
+    es: "Nueva conversación",
+  },
 
   // --- Entry points (docs/05-three-ways-in.md) ----------------------------
   "entry.random.title": {
@@ -204,6 +256,114 @@ export const COPY = {
   "choose.clear": {
     en: "Clear",
     es: "Limpiar",
+  },
+
+  // --- Navigation & Header --------------------------------------------------
+  "nav.home": {
+    en: "Home",
+    es: "Inicio",
+  },
+  "nav.verbs": {
+    en: "Verbs",
+    es: "Verbos",
+  },
+  "nav.conversation": {
+    en: "Conversation",
+    es: "Conversación",
+  },
+  "nav.lab": {
+    en: "AI Lab",
+    es: "Laboratorio IA",
+  },
+  "nav.settings": {
+    en: "Settings",
+    es: "Ajustes",
+  },
+
+  // --- Audio & Experimentation Lab (Plan 000 & Plan 02) ---------------------
+  "lab.title": {
+    en: "AI & Voice Experimentation Lab",
+    es: "Laboratorio de IA y Voz",
+  },
+  "lab.subtitle": {
+    en: "Benchmark AI providers, models, speech synthesis, recognition, and character personas.",
+    es: "Evalúa proveedores de IA, modelos, síntesis de voz, reconocimiento y personajes.",
+  },
+  "lab.tabProviders": {
+    en: "Providers & Models",
+    es: "Proveedores y Modelos",
+  },
+  "lab.tabCharacters": {
+    en: "Character Roster",
+    es: "Elenco de Personajes",
+  },
+  "lab.tabAudio": {
+    en: "Speech & Audio",
+    es: "Voz y Audio",
+  },
+  "lab.tabSandbox": {
+    en: "Live Sandbox",
+    es: "Sandbox en Vivo",
+  },
+  "lab.tabDiagnostics": {
+    en: "Diagnostics & Logs",
+    es: "Diagnósticos y Registros",
+  },
+  "lab.activeProvider": {
+    en: "Active Provider",
+    es: "Proveedor Activo",
+  },
+  "lab.activeModel": {
+    en: "Active Model",
+    es: "Modelo Activo",
+  },
+  "lab.temperature": {
+    en: "Temperature",
+    es: "Temperatura",
+  },
+  "lab.testSpeech": {
+    en: "Test Speech Synthesis",
+    es: "Probar Síntesis de Voz",
+  },
+  "lab.testListening": {
+    en: "Test Speech Recognition",
+    es: "Probar Reconocimiento de Voz",
+  },
+  "lab.bargeInTest": {
+    en: "Test Interruption (Barge-in)",
+    es: "Probar Interrupción (Barge-in)",
+  },
+  "lab.clearLogs": {
+    en: "Clear Logs",
+    es: "Limpiar Registros",
+  },
+  "lab.exportLogs": {
+    en: "Export Experiment Data",
+    es: "Exportar Datos de Experimento",
+  },
+  "lab.latency": {
+    en: "Latency",
+    es: "Latencia",
+  },
+  "lab.playVoice": {
+    en: "Play Sample Voice",
+    es: "Reproducir Voz de Muestra",
+  },
+  "lab.stopVoice": {
+    en: "Stop Voice",
+    es: "Detener Voz",
+  },
+  "lab.recordingVoice": {
+    en: "Listening… Speak Italian now",
+    es: "Escuchando… Habla en italiano ahora",
+  },
+  "lab.sendText": {
+    en: "Send Message",
+    es: "Enviar Mensaje",
+  },
+  "lab.inputPlaceholder": {
+    en: "Type Italian or test message…",
+    es: "Escribe en italiano o mensaje de prueba…",
   },
 } as const satisfies Record<string, Entry>;
 

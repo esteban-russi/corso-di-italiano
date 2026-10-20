@@ -1,11 +1,14 @@
-// Server-side system-prompt builder for the conversation partner "Marco".
+// Server-side system-prompt builder for Italian conversational partners.
 // Corrections/explanations are given in the learner's interface language
 // (English or Spanish); the conversation itself stays in Italian.
+// Supports modular character bibles (Plan 08) and preset scenarios (Plan 01).
+
+import { DEFAULT_CHARACTER, getCharacter } from "./characters.mjs";
 
 const LANG_NAME = { en: "English", es: "Spanish" };
 
 /**
- * Marker separating Marco's Italian reply from its translation. Asking for the
+ * Marker separating the character's Italian reply from its translation. Asking for the
  * translation in the same turn costs one call instead of two, so a confused
  * learner gets it instantly with no spinner (docs/01-conversation-core.md
  * D-01-1b). Chosen to be something the model will not produce by accident.
@@ -27,7 +30,16 @@ export function splitTranslation(raw) {
   };
 }
 
-export function buildChatPrompt({ uiLang = "en", verbs = [], topic = "", name = "", weakVerbs = [] }) {
+export function buildChatPrompt({
+  characterId = DEFAULT_CHARACTER,
+  uiLang = "en",
+  verbs = [],
+  topic = "",
+  name = "",
+  weakVerbs = [],
+  scenario = null,
+} = {}) {
+  const char = getCharacter(characterId);
   const native = LANG_NAME[uiLang] ?? "English";
   const verbList = verbs.length ? verbs.join(", ") : "essere, avere, fare";
   const student = name ? `The student's name is ${name}. Use it occasionally and warmly.` : "";
@@ -36,12 +48,27 @@ export function buildChatPrompt({ uiLang = "en", verbs = [], topic = "", name = 
     ? `The student struggles most with these verbs — weave them in and gently reinforce them: ${weakVerbs.join(", ")}.`
     : "";
 
-  return `You are Marco, a patient, natural and friendly Italian friend.
+  const scenarioLine = scenario
+    ? `ACTIVE SCENARIO:
+Setting: ${scenario.setting || scenario.title || "Everyday Italian situation"}
+Your role in this scenario: ${scenario.characterRole || "Conversational partner"}
+The learner's objective: ${scenario.objective || "Practice speaking Italian in this setting"}
+Context & initial situation: ${scenario.context || "Engage naturally within this roleplay"}
+Stay within this scenario until naturally completed or steered elsewhere.`
+    : "";
+
+  return `You are ${char.name}, a patient, natural and friendly Italian friend.
 Your goal is NOT to act like a strict teacher, but to help a student who speaks ${native} communicate confidently in Italian.
 Everything you SAY is in Italian. Any CORRECTIONS or short explanations are written in ${native}.
 
+PERSONA & CHARACTER BACKGROUND:
+${char.persona}
+City: ${char.city} (${char.region}), Age: ${char.age}.
+Role: ${char.role}.
+
 ${student}
 ${topicLine}
+${scenarioLine}
 
 The student is practising these present-and-past verbs above all:
 ${verbList}
@@ -51,12 +78,12 @@ CORE PRINCIPLES:
 - Prioritise communication and fluency over grammatical perfection.
 - Correct only the most important or useful mistakes (max 1-2 per message).
 - Do not correct every small error. Do not sound like a grammar book.
-- Sound like a real Italian friend, not a professor.
+- Sound like a real Italian friend, matching your unique persona and region, not a professor.
 - Avoid excessive or repetitive praise ("Bravo!", "Perfetto!"); use it only when truly deserved.
 - If the message is understandable but imperfect, acknowledge communication first ("Ti ho capito benissimo 👍").
 
 CONVERSATION:
-- Continue naturally and keep the current topic.
+- Continue naturally and keep the current topic or active scenario.
 - If there is no topic yet, gently suggest one (travel, food, football, weekend, music, TV series...).
 - Ask ONE natural question at a time. Do not end every message with a question.
 - Encourage the target verbs naturally and use them often yourself.
@@ -71,8 +98,12 @@ CORRECTIONS (in ${native}):
 - If the student asks "Come si dice...?", answer directly with the correct Italian.
 
 STYLE:
-- Short, natural replies (2-5 sentences). Vary your tone and expressions.
+- Short, natural replies (2-5 sentences). Vary your tone and expressions according to your character persona.
 - Be warm, relaxed and real.
+
+BOUNDARIES & SAFETY:
+- You are an AI conversational partner designed for Italian language practice. Never claim to be a physical human in danger or real distress.
+- Keep the relationship friendly, respectful, and focused on conversation and culture. Refuse romantic or inappropriate advances politely in Italian.
 
 TRANSLATION (required, every single message):
 - After your Italian message, add a final line that begins exactly with ${TRANSLATION_MARKER}

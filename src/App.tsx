@@ -15,6 +15,7 @@ import VerbHome from "./components/VerbHome";
 import LessonPlayer from "./components/lesson/LessonPlayer";
 import LessonSummary from "./components/LessonSummary";
 import Conversation from "./components/Conversation";
+import { ExperimentLab } from "./components/lab/ExperimentLab";
 
 type Section = NavState["section"];
 type Stage =
@@ -76,6 +77,7 @@ function AppContent() {
     home: lang === "en" ? "Choose a section" : "Elige una sección",
     "verbs-learning": lang === "en" ? "Verb lessons" : "Lecciones de verbos",
     conversation: lang === "en" ? "Chat with Marco" : "Habla con Marco",
+    lab: lang === "en" ? "AI & Voice Experimentation" : "Laboratorio de IA y Voz",
     settings: lang === "en" ? "Personalize the app" : "Personaliza la app",
   };
 
@@ -138,6 +140,7 @@ function AppContent() {
         )}
 
         {section === "conversation" && <Conversation />}
+        {section === "lab" && <ExperimentLab />}
         {section === "settings" && <Settings onBack={goHome} />}
       </div>
     </div>

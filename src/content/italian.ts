@@ -27,3 +27,14 @@ export const CONVERSATION_REPLIES: string[] = [
   "Dammi una sfida! 💪",
   "Non ho capito, puoi ripetere?",
 ];
+
+/** Testing app sample text for speech synthesis */
+export const LAB_SAMPLE_TTS = "Buongiorno! Vorrei un caffè espresso e un cornetto caldo, grazie.";
+
+/** Testing app passage for barge-in interruption tests */
+export const LAB_BARGE_IN_PASSAGE = "Oggi a Roma è una giornata meravigliosa di sole. Ho fatto una passeggiata vicino al Colosseo e poi mi sono fermato per mangiare un piatto di pasta fresca. Tu cosa hai fatto di bello?";
+
+/** Simulated mock reply for offline benchmarking */
+export function mockItalianReply(charName: string, city: string): string {
+  return `Ti ho capito benissimo! [${charName} - ${city}] Risposta di prova generata con successo dal provider mock.`;
+}
