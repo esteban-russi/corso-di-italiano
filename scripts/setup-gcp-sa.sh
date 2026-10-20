@@ -28,7 +28,18 @@ gcloud services enable \
   artifactregistry.googleapis.com \
   --project="$PROJECT_ID"
 
-# 2. Create Service Account if not exists
+# 2. Ensure cloud-run-source-deploy Artifact Registry repo exists
+REGION="${GCP_REGION:-europe-west2}"
+if ! gcloud artifacts repositories describe "cloud-run-source-deploy" --location="$REGION" --project="$PROJECT_ID" &>/dev/null; then
+  echo "--> Creating Artifact Registry repository cloud-run-source-deploy in $REGION..."
+  gcloud artifacts repositories create "cloud-run-source-deploy" \
+    --repository-format=docker \
+    --location="$REGION" \
+    --description="Cloud Run source deploy repository" \
+    --project="$PROJECT_ID"
+fi
+
+# 3. Create Service Account if not exists
 if ! gcloud iam service-accounts describe "$SA_EMAIL" --project="$PROJECT_ID" &>/dev/null; then
   echo "--> Creating service account $SA_NAME..."
   gcloud iam service-accounts create "$SA_NAME" \
