@@ -15,7 +15,7 @@ npm run serve                 # build + start (production-like, single process)
 
 make docker                   # build image, run on :8080 with $GEMINI_API_KEY
 make deploy                   # Cloud Build → Artifact Registry → Cloud Run (manual deploy)
-# Automated deploys trigger on push to `main` via .github/workflows/ci.yml
+# Automated deploys trigger on push to `main` via .github/workflows/deploy.yml
 ```
 
 **Local development needs two processes**: `npm run start` and `npm run dev` in separate

@@ -1,0 +1,116 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: corso-di-italiano-496920
+  REGION: europe-west2
+  SERVICE_NAME: corso-di-italiano
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: |
+          if npm run | grep -q ' typecheck$'; then
+            npm run typecheck
+          else
+            npx tsc --noEmit
+          fi
+
+      - name: Unit tests
+        run: |
+          if npm run | grep -q ' test$'; then
+            npm test
+          else
+            echo "No test script configured, skipping unit tests."
+          fi
+
+      - name: Build SPA
+        run: npm run build
+
+      - name: E2E tests
+        run: |
+          if [ -f "playwright.config.ts" ]; then
+            npx playwright install --with-deps chromium
+            npm run e2e
+          else
+            echo "No Playwright configuration found, skipping E2E tests."
+          fi
+
+      - name: Check JS bundle budget
+        run: |
+          if [ -d "dist/assets" ]; then
+            budget_kb=200
+            total=$(find dist/assets -name '*.js' -exec gzip -c {} \; | wc -c)
+            total_kb=$(( total / 1024 ))
+            echo "gzipped JS: ${total_kb} KB (budget ${budget_kb} KB)"
+            if [ "$total_kb" -gt "$budget_kb" ]; then
+              echo "::error::JS bundle is ${total_kb} KB gzipped, over the ${budget_kb} KB budget"
+              exit 1
+            fi
+          fi
+
+  deploy:
+    name: Deploy to Cloud Run
+    needs: test
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          DEPLOY_CMD="gcloud run deploy \"$SERVICE_NAME\" \
+            --project \"$PROJECT_ID\" \
+            --region \"$REGION\" \
+            --source . \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --concurrency 80 \
+            --min-instances 0 \
+            --max-instances 3"
+
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+            DEPLOY_CMD="$DEPLOY_CMD --update-env-vars GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+          fi
+
+          eval "$DEPLOY_CMD"
+
+      - name: Verify Deployment
+        run: |
+          SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          echo "Service successfully deployed to: $SERVICE_URL"
+          echo "### :rocket: Cloud Run Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "Service URL: $SERVICE_URL" >> $GITHUB_STEP_SUMMARY
