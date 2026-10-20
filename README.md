@@ -201,6 +201,19 @@ make docker     # build the image and run it on :8080 with your GEMINI_API_KEY
 ```
 
 ### Deploy to Cloud Run
+
+#### Automated (CI/CD)
+Deployments are automated via [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
+- **Pull requests to `main`**: Runs the `test` job (typecheck, tests, Vite build, bundle budget).
+- **Push to `main`**: Runs `test`, then builds and deploys to Cloud Run using `gcloud run deploy --source .`.
+
+To set up the GitHub secret (`GCP_SA_KEY`):
+```bash
+./scripts/setup-gcp-sa.sh
+```
+Or manually create a Service Account with `roles/run.admin`, `roles/cloudbuild.builds.editor`, `roles/artifactregistry.admin`, `roles/storage.admin`, and `roles/iam.serviceAccountUser`, and store the JSON key in GitHub Secret `GCP_SA_KEY`.
+
+#### Manual (Makefile)
 ```bash
 make deploy     # Cloud Build → Artifact Registry → gcloud run deploy
 ```
