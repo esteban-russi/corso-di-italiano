@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLang } from '../../context/LangContext';
+import {
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  PhoneOff,
+  Grid,
+  Subtitles,
+  Sparkles,
+  HelpCircle,
+  X
+} from 'lucide-react';
 import type { Persona, CharacterSpeakingState, DevSettings } from '../../types/conversation';
 import { PersonaBadge } from './PersonaBadge';
 import { speechService, createSpeechRecognizer } from '../../utils/speech';
 import { ITALIAN_PRACTICE_PHRASES, generateCallFallback } from '../../content/personas';
-import { btn } from '../../utils';
 
 interface PhoneCallModalProps {
   persona: Persona;
@@ -26,7 +36,6 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
   onEndCall,
   onOpenDevSettings
 }) => {
-  const { lang } = useLang();
   const [callStatus, setCallStatus] = useState<'calling' | 'connected'>('calling');
   const [callDurationSec, setCallDurationSec] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -40,6 +49,7 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
   const [currentTranslation, setCurrentTranslation] = useState('');
   const [dialogueHistory, setDialogueHistory] = useState<CallExchange[]>([]);
   const [userTranscriptInput, setUserTranscriptInput] = useState('');
+  const [isRecognizing, setIsRecognizing] = useState(false);
   const [dialedDigits, setDialedDigits] = useState('');
 
   const timerRef = useRef<number | null>(null);
@@ -84,7 +94,7 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
     } else {
       setTimeout(() => {
         setSpeakingState('listening');
-      }, 2000);
+      }, 2500);
     }
   };
 
@@ -96,7 +106,7 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
       {
         speaker: 'user',
         text: spokenText,
-        translation: 'Learner spoken phrase',
+        translation: 'Student spoken Italian',
         timestamp: formatDuration(callDurationSec)
       }
     ]);
@@ -119,8 +129,9 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
 
       if (res.ok) {
         const data = await res.json();
-        if (data.text) {
-          handlePersonaSpeak(data.text, data.translation || '');
+        const replyText = data.text || data.reply;
+        if (replyText) {
+          handlePersonaSpeak(replyText, data.translation || '');
           return;
         }
       }
@@ -176,6 +187,7 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
           // ignore
         }
       }
+      setIsRecognizing(false);
       return;
     }
 
@@ -183,14 +195,19 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
       (transcript: string) => {
         setUserTranscriptInput(transcript);
       },
-      () => {},
-      () => {}
+      () => {
+        setIsRecognizing(false);
+      },
+      () => {
+        setIsRecognizing(false);
+      }
     );
 
     if (rec) {
       recognizerRef.current = rec;
       try {
         rec.start();
+        setIsRecognizing(true);
       } catch {
         // ignore
       }
@@ -210,260 +227,144 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--color-call-overlay)',
-        backdropFilter: 'blur(8px)',
-        padding: '16px'
-      }}
-    >
-      {/* Phone container */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 420,
-          height: '92vh',
-          maxHeight: 780,
-          background: 'var(--color-background-primary)',
-          border: '1px solid var(--color-border-primary)',
-          borderRadius: 28,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: 'var(--shadow-lg)'
-        }}
-      >
-        {/* Soft Ambient Top Glow */}
-        <div
-          style={{
-            position: 'absolute',
-            top: -60,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 260,
-            height: 160,
-            background: 'var(--color-brand-red-soft)',
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-            pointerEvents: 'none'
-          }}
-        />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+      {/* Light Mode Phone Container with Italian Red & Stone Aesthetics */}
+      <div className="relative w-full max-w-md h-[92vh] max-h-[820px] bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col shadow-2xl">
+        {/* Soft Red Ambient Top Lighting */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-48 bg-red-100/70 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header Bar */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            padding: '16px 20px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid var(--color-border-tertiary)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'var(--color-brand-red)',
-                animation: 'pulseGlow 1.2s ease-in-out infinite'
-              }}
-            />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-text-primary)' }}>
-                {callStatus === 'calling'
-                  ? (lang === 'en' ? 'Calling…' : 'Llamando…')
-                  : formatDuration(callDurationSec)}
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {devSettings.voiceProvider === 'gemini_live' ? 'GEMINI 3.8 SERVER TTS' : 'WEB SPEECH'} · {persona.city}
-              </div>
+        <div className="relative z-10 px-5 pt-4 pb-2 flex items-center justify-between text-slate-600 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-xs font-bold tracking-tight text-slate-900">
+                {callStatus === 'calling' ? 'Chiamata in corso...' : formatDuration(callDurationSec)}
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono-data">
+                {devSettings.voiceProvider === 'gemini_live'
+                  ? 'GEMINI 3.8 SERVER TTS'
+                  : devSettings.voiceProvider.replace('_', ' ').toUpperCase()}{' '}
+                · {persona.city}
+              </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="flex items-center gap-2">
             <button
               onClick={onOpenDevSettings}
-              style={{
-                ...btn(),
-                padding: '4px 10px',
-                borderRadius: 8,
-                fontSize: 11,
-                fontWeight: 700,
-                background: 'var(--color-brand-red-subtle)',
-                color: 'var(--color-brand-red)',
-                border: '1px solid var(--color-brand-red-border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 flex items-center gap-1 transition-colors font-medium"
+              title="Voice Lab & Parametri"
             >
-              <span>🎙️</span>
+              <Sparkles className="w-3 h-3 text-red-600" />
               <span>Voice Lab</span>
             </button>
-
             <button
               onClick={handleHangup}
-              style={{
-                ...btn(),
-                padding: '4px 8px',
-                borderRadius: 8,
-                fontSize: 13,
-                background: 'var(--color-background-secondary)',
-                border: '1px solid var(--color-border-tertiary)',
-                color: 'var(--color-text-secondary)'
-              }}
-              title={lang === 'en' ? 'Close call' : 'Cerrar llamada'}
+              className="p-1.5 rounded-full hover:bg-stone-100 text-slate-400 hover:text-slate-700 transition-colors"
+              title="Chiudi"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Center Sound Stage */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            textAlign: 'center',
-            overflowY: 'auto'
-          }}
-        >
+        {/* Center Screen: Voice Sound Stage */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-3 text-center">
           {/* Identity */}
-          <div style={{ marginBottom: 14 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight font-editorial">
               {persona.fullName}
             </h2>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mt-0.5">
               <span>{persona.city}</span>
-              <span>·</span>
-              <span style={{ color: 'var(--color-brand-red)', fontWeight: 700 }}>{persona.levelLabel}</span>
-              <span>·</span>
+              <span aria-hidden="true">·</span>
+              <span className="text-red-700 font-semibold">{persona.levelLabel}</span>
+              <span aria-hidden="true">·</span>
               <span>{persona.role}</span>
             </div>
           </div>
 
-          {/* Minimalist Sound Stage Monogram Badge */}
-          <div style={{ margin: '10px auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {/* Minimalist Sound Stage with Monogram Badge & Live Audio Pulse */}
+          <div className="relative my-auto flex flex-col items-center">
             <PersonaBadge persona={persona} size="call" speakingState={speakingState} />
 
             {/* Speaking / Listening Frequency Visualizer */}
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-              <span className={speakingState === 'speaking' ? 'animate-wave-1' : ''} style={{ width: 4, height: speakingState === 'speaking' ? 24 : 8, borderRadius: 2, background: 'var(--color-brand-red)' }} />
-              <span className={speakingState === 'speaking' ? 'animate-wave-2' : ''} style={{ width: 4, height: speakingState === 'speaking' ? 32 : 12, borderRadius: 2, background: 'var(--color-brand-red)' }} />
-              <span className={speakingState === 'speaking' ? 'animate-wave-3' : ''} style={{ width: 4, height: speakingState === 'speaking' ? 20 : 6, borderRadius: 2, background: 'var(--color-brand-red)' }} />
-              <span className={speakingState === 'speaking' ? 'animate-wave-4' : ''} style={{ width: 4, height: speakingState === 'speaking' ? 36 : 14, borderRadius: 2, background: 'var(--color-brand-red)' }} />
-              <span className={speakingState === 'speaking' ? 'animate-wave-5' : ''} style={{ width: 4, height: speakingState === 'speaking' ? 22 : 8, borderRadius: 2, background: 'var(--color-brand-red)' }} />
+            <div className="mt-5 flex items-center justify-center gap-1.5">
+              <span className={`w-1.5 rounded-full ${speakingState === 'speaking' ? 'bg-red-600 animate-wave-1' : 'bg-slate-300 h-2'}`} />
+              <span className={`w-1.5 rounded-full ${speakingState === 'speaking' ? 'bg-red-600 animate-wave-2' : 'bg-slate-300 h-3'}`} />
+              <span className={`w-1.5 rounded-full ${speakingState === 'speaking' ? 'bg-red-600 animate-wave-3' : 'bg-slate-300 h-1.5'}`} />
+              <span className={`w-1.5 rounded-full ${speakingState === 'speaking' ? 'bg-red-600 animate-wave-4' : 'bg-slate-300 h-4'}`} />
+              <span className={`w-1.5 rounded-full ${speakingState === 'speaking' ? 'bg-red-600 animate-wave-5' : 'bg-slate-300 h-2'}`} />
             </div>
 
-            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700 }}>
+            <div className="mt-2 text-xs font-medium text-slate-600">
               {speakingState === 'speaking' ? (
-                <span style={{ color: 'var(--color-brand-red)' }}>
-                  {persona.name} {lang === 'en' ? 'is speaking…' : 'está hablando…'}
+                <span className="text-red-600 font-semibold flex items-center gap-1 justify-center">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                  {persona.name} sta parlando...
                 </span>
               ) : speakingState === 'listening' ? (
-                <span style={{ color: 'var(--color-success)' }}>
-                  {lang === 'en' ? 'Listening… speak now!' : 'Escuchando… ¡habla ahora!'}
+                <span className="text-emerald-600 font-semibold flex items-center gap-1 justify-center">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  In ascolto... Parla pure!
                 </span>
               ) : speakingState === 'thinking' ? (
-                <span style={{ color: 'var(--color-primary)' }}>
-                  {lang === 'en' ? 'Processing with Gemini AI…' : 'Procesando con Gemini AI…'}
+                <span className="text-amber-600 font-semibold">
+                  Elaborazione con Gemini AI...
                 </span>
               ) : (
-                <span style={{ color: 'var(--color-text-secondary)' }}>
-                  {lang === 'en' ? 'Audio channel connected' : 'Canal de voz conectado'}
-                </span>
+                <span className="text-slate-400">Canale Vocale Connesso</span>
               )}
             </div>
           </div>
 
-          {/* Subtitles Overlay */}
+          {/* Real-time Subtitles / Captions */}
           {showSubtitles && (
-            <div
-              style={{
-                width: '100%',
-                maxWidth: 360,
-                background: 'var(--color-background-primary)',
-                border: '1px solid var(--color-border-secondary)',
-                borderRadius: 14,
-                padding: '10px 14px',
-                margin: '8px 0',
-                textAlign: 'left',
-                boxShadow: 'var(--shadow-sm)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: 'var(--color-text-secondary)', marginBottom: 4, borderBottom: '1px solid var(--color-border-tertiary)', paddingBottom: 3 }}>
-                <span style={{ color: 'var(--color-brand-red)', fontWeight: 800 }}>
-                  💬 {lang === 'en' ? 'Live Subtitles' : 'Subtítulos en vivo'}
+            <div className="w-full max-w-sm bg-white/95 border border-slate-200 rounded-2xl p-3 my-2 text-left shadow-xs">
+              <div className="flex items-center justify-between text-[10px] text-slate-400 pb-1 mb-1 border-b border-slate-100">
+                <span className="flex items-center gap-1 font-semibold text-red-600">
+                  <Subtitles className="w-3 h-3" /> Sottotitoli Live
                 </span>
-                <span>{speakingState === 'speaking' ? persona.name : (lang === 'en' ? 'Student' : 'Estudiante')}</span>
+                <span className="italic">
+                  {speakingState === 'speaking' ? persona.name : 'Studente'}
+                </span>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: 1.4 }}>
-                {currentSpeechText || (userTranscriptInput || (lang === 'en' ? 'Waiting for speech…' : 'Esperando voz…'))}
-              </div>
+              <p className="text-sm font-medium text-slate-900 leading-snug">
+                {currentSpeechText ||
+                  (isRecognizing ? userTranscriptInput || 'Parla pure al microfono...' : 'In attesa...')}
+              </p>
               {currentTranslation && (
-                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontStyle: 'italic', marginTop: 4, borderTop: '1px solid var(--color-border-tertiary)', paddingTop: 4 }}>
+                <p className="text-xs text-slate-500 mt-1 italic border-t border-slate-100 pt-1">
                   &ldquo;{currentTranslation}&rdquo;
-                </div>
+                </p>
               )}
             </div>
           )}
 
-          {/* Speaking Practice Suggestions ("Cosa dire") */}
+          {/* Speaking Practice Suggestions */}
           {showPromptAssistance && (
-            <div
-              style={{
-                width: '100%',
-                maxWidth: 360,
-                background: 'var(--color-background-primary)',
-                border: '1px solid var(--color-brand-red-border)',
-                borderRadius: 14,
-                padding: '10px 12px',
-                margin: '6px 0',
-                textAlign: 'left',
-                fontSize: 12,
-                boxShadow: 'var(--shadow-md)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontWeight: 800, color: 'var(--color-brand-red)' }}>
-                  💡 {lang === 'en' ? 'What to say:' : 'Qué decir:'}
+            <div className="w-full max-w-sm bg-white border border-red-200 rounded-2xl p-3 my-1 text-left text-xs shadow-md animate-in slide-in-from-bottom-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-semibold text-red-700 flex items-center gap-1">
+                  <HelpCircle className="w-3.5 h-3.5" /> Frasi da dire:
                 </span>
-                <button onClick={() => setShowPromptAssistance(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>✕</button>
+                <button
+                  onClick={() => setShowPromptAssistance(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 110, overflowY: 'auto' }}>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
                 {ITALIAN_PRACTICE_PHRASES.slice(0, 3).map((item, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleUserReply(item.it)}
-                    style={{
-                      ...btn(),
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '6px 10px',
-                      borderRadius: 8,
-                      background: 'var(--color-background-secondary)',
-                      border: '1px solid var(--color-border-tertiary)',
-                      display: 'block'
-                    }}
+                    className="w-full text-left p-2 rounded-lg bg-stone-50 hover:bg-red-50 hover:border-red-200 border border-slate-200 transition-colors block text-slate-800"
                   >
-                    <div style={{ fontWeight: 700, color: 'var(--color-brand-red)', fontSize: 11.5 }}>{item.it}</div>
-                    <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{item.en}</div>
+                    <div className="font-medium text-red-700">{item.it}</div>
+                    <div className="text-[10px] text-slate-500 italic">{item.en}</div>
                   </button>
                 ))}
               </div>
@@ -472,49 +373,34 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
 
           {/* Dialpad Overlay */}
           {showKeypad && (
-            <div
-              style={{
-                width: '100%',
-                maxWidth: 280,
-                background: 'var(--color-background-primary)',
-                border: '1px solid var(--color-border-secondary)',
-                borderRadius: 14,
-                padding: '12px',
-                margin: '6px 0',
-                boxShadow: 'var(--shadow-md)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid var(--color-border-tertiary)' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                  {dialedDigits || (lang === 'en' ? 'Dialpad' : 'Teclado')}
+            <div className="w-full max-w-xs bg-white border border-slate-200 rounded-2xl p-3 my-1 shadow-lg animate-in zoom-in-95">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <span className="text-xs text-slate-600 font-mono-data tracking-wider font-semibold">
+                  {dialedDigits || 'Tastiera Telefonica'}
                 </span>
-                <button onClick={() => setShowKeypad(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>✕</button>
+                <button
+                  onClick={() => setShowKeypad(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((digit) => (
+              <div className="grid grid-cols-3 gap-2">
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((btnKey) => (
                   <button
-                    key={digit}
-                    onClick={() => handleKeyPress(digit)}
-                    style={{
-                      ...btn(),
-                      height: 38,
-                      borderRadius: 10,
-                      background: 'var(--color-background-secondary)',
-                      fontSize: 14,
-                      fontWeight: 800,
-                      color: 'var(--color-text-primary)',
-                      border: '1px solid var(--color-border-tertiary)'
-                    }}
+                    key={btnKey}
+                    onClick={() => handleKeyPress(btnKey)}
+                    className="h-10 rounded-xl bg-stone-50 hover:bg-stone-100 text-slate-900 font-bold text-sm active:scale-95 transition-transform flex items-center justify-center border border-slate-200"
                   >
-                    {digit}
+                    {btnKey}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Quick text reply composer in call */}
-          <div style={{ width: '100%', maxWidth: 360, marginTop: 6, display: 'flex', gap: 6 }}>
+          {/* Interactive reply composer */}
+          <div className="w-full max-w-sm mt-1 flex items-center gap-2">
             <input
               type="text"
               value={userTranscriptInput}
@@ -524,220 +410,120 @@ export const PhoneCallModal: React.FC<PhoneCallModalProps> = ({
                   handleUserReply(userTranscriptInput);
                 }
               }}
-              placeholder={lang === 'en' ? 'Type or speak reply…' : 'Escribe o habla…'}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                fontSize: 12,
-                borderRadius: 10,
-                border: '1px solid var(--color-border-secondary)',
-                background: 'var(--color-background-secondary)',
-                color: 'var(--color-text-primary)',
-                outline: 'none'
-              }}
+              placeholder="Scrivi o parla in italiano..."
+              className="flex-1 bg-stone-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-600 focus:bg-white"
             />
             {userTranscriptInput.trim() && (
               <button
                 onClick={() => handleUserReply(userTranscriptInput)}
-                style={{
-                  ...btn(),
-                  padding: '8px 14px',
-                  borderRadius: 10,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  background: 'var(--color-brand-red)',
-                  color: 'var(--color-on-primary)',
-                  border: 'none'
-                }}
+                className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs transition-colors shrink-0 shadow-xs"
               >
-                ➤
+                Invia
               </button>
             )}
           </div>
         </div>
 
-        {/* Regular Basic Call Controls (NO videocall button) */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            background: 'var(--color-background-secondary)',
-            borderTop: '1px solid var(--color-border-tertiary)',
-            padding: '14px 20px 20px'
-          }}
-        >
-          {/* Secondary buttons: Subtitles, Suggestions, Dialpad */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', marginBottom: 14 }}>
+        {/* Regular Basic Call Controls (Audio Call Only - NO videocall button) */}
+        <div className="relative z-10 bg-stone-50 border-t border-slate-200 px-6 py-4">
+          {/* Secondary Buttons */}
+          <div className="flex items-center justify-around mb-4 text-slate-500">
             <button
               onClick={() => setShowSubtitles(!showSubtitles)}
-              style={{
-                ...btn(),
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-                border: 'none',
-                background: 'transparent',
-                color: showSubtitles ? 'var(--color-brand-red)' : 'var(--color-text-secondary)',
-                fontSize: 10,
-                fontWeight: showSubtitles ? 700 : 500
-              }}
+              className={`flex flex-col items-center gap-1 text-[10px] transition-colors ${
+                showSubtitles ? 'text-red-700 font-semibold' : 'hover:text-slate-800'
+              }`}
+              title="Attiva/Disattiva Sottotitoli"
             >
               <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: showSubtitles ? 'var(--color-brand-red-subtle)' : 'var(--color-background-primary)',
-                  border: `1px solid ${showSubtitles ? 'var(--color-brand-red-border)' : 'var(--color-border-secondary)'}`,
-                  fontSize: 14
-                }}
+                className={`w-9 h-9 rounded-full flex items-center justify-center border ${
+                  showSubtitles
+                    ? 'bg-red-100 border-red-300 text-red-700'
+                    : 'bg-white border-slate-200'
+                }`}
               >
-                💬
+                <Subtitles className="w-4 h-4" />
               </div>
-              <span>{lang === 'en' ? 'Subtitles' : 'Subtítulos'}</span>
+              <span>Sottotitoli</span>
             </button>
 
             <button
               onClick={() => setShowPromptAssistance(!showPromptAssistance)}
-              style={{
-                ...btn(),
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-                border: 'none',
-                background: 'transparent',
-                color: showPromptAssistance ? 'var(--color-brand-red)' : 'var(--color-text-secondary)',
-                fontSize: 10,
-                fontWeight: showPromptAssistance ? 700 : 500
-              }}
+              className={`flex flex-col items-center gap-1 text-[10px] transition-colors ${
+                showPromptAssistance ? 'text-red-700 font-semibold' : 'hover:text-slate-800'
+              }`}
+              title="Suggerimenti frasi in italiano"
             >
               <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: showPromptAssistance ? 'var(--color-brand-red-subtle)' : 'var(--color-background-primary)',
-                  border: `1px solid ${showPromptAssistance ? 'var(--color-brand-red-border)' : 'var(--color-border-secondary)'}`,
-                  fontSize: 14
-                }}
+                className={`w-9 h-9 rounded-full flex items-center justify-center border ${
+                  showPromptAssistance
+                    ? 'bg-red-100 border-red-300 text-red-700'
+                    : 'bg-white border-slate-200'
+                }`}
               >
-                💡
+                <HelpCircle className="w-4 h-4" />
               </div>
-              <span>{lang === 'en' ? 'Ideas' : 'Ideas'}</span>
+              <span>Cosa dire</span>
             </button>
 
             <button
               onClick={() => setShowKeypad(!showKeypad)}
-              style={{
-                ...btn(),
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-                border: 'none',
-                background: 'transparent',
-                color: showKeypad ? 'var(--color-brand-red)' : 'var(--color-text-secondary)',
-                fontSize: 10,
-                fontWeight: showKeypad ? 700 : 500
-              }}
+              className={`flex flex-col items-center gap-1 text-[10px] transition-colors ${
+                showKeypad ? 'text-red-700 font-semibold' : 'hover:text-slate-800'
+              }`}
+              title="Tastierino telefonico"
             >
               <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: showKeypad ? 'var(--color-brand-red-subtle)' : 'var(--color-background-primary)',
-                  border: `1px solid ${showKeypad ? 'var(--color-brand-red-border)' : 'var(--color-border-secondary)'}`,
-                  fontSize: 14
-                }}
+                className={`w-9 h-9 rounded-full flex items-center justify-center border ${
+                  showKeypad
+                    ? 'bg-red-100 border-red-300 text-red-700'
+                    : 'bg-white border-slate-200'
+                }`}
               >
-                🔢
+                <Grid className="w-4 h-4" />
               </div>
-              <span>{lang === 'en' ? 'Keypad' : 'Teclado'}</span>
+              <span>Tastierino</span>
             </button>
           </div>
 
-          {/* Primary Call Controls: Mute, Speaker, Hangup (NO videocall button) */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-            {/* 1. Mute */}
+          {/* Primary Call Controls: Mute, Speaker, Hangup (NO video call button) */}
+          <div className="flex items-center justify-center gap-6">
+            {/* Mute */}
             <button
               onClick={() => setIsMuted(!isMuted)}
-              style={{
-                ...btn(),
-                width: 52,
-                height: 52,
-                borderRadius: '50%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: isMuted ? 'var(--color-brand-red-subtle)' : 'var(--color-background-primary)',
-                border: `1px solid ${isMuted ? 'var(--color-brand-red-border)' : 'var(--color-border-secondary)'}`,
-                color: isMuted ? 'var(--color-brand-red)' : 'var(--color-text-primary)',
-                fontSize: 16
-              }}
-              title={isMuted ? (lang === 'en' ? 'Unmute microphone' : 'Activar micrófono') : (lang === 'en' ? 'Mute microphone' : 'Silenciar micrófono')}
+              className={`w-13 h-13 rounded-full flex flex-col items-center justify-center transition-transform active:scale-90 border shadow-xs ${
+                isMuted
+                  ? 'bg-red-50 border-red-200 text-red-600'
+                  : 'bg-white border-slate-200 text-slate-800 hover:bg-stone-100'
+              }`}
+              title={isMuted ? 'Riattiva microfono (Unmute)' : 'Disattiva microfono (Mute)'}
             >
-              <span>{isMuted ? '🔇' : '🎙️'}</span>
-              <span style={{ fontSize: 9, marginTop: 1 }}>{isMuted ? (lang === 'en' ? 'Muted' : 'Silencio') : (lang === 'en' ? 'Mic' : 'Mic')}</span>
+              {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              <span className="text-[9px] mt-0.5">{isMuted ? 'Muto' : 'Microfono'}</span>
             </button>
 
-            {/* 2. Speaker */}
+            {/* Speaker */}
             <button
               onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-              style={{
-                ...btn(),
-                width: 52,
-                height: 52,
-                borderRadius: '50%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: !isSpeakerOn ? 'var(--color-background-secondary)' : 'var(--color-background-primary)',
-                border: `1px solid ${!isSpeakerOn ? 'var(--color-border-secondary)' : 'var(--color-border-primary)'}`,
-                color: 'var(--color-text-primary)',
-                fontSize: 16
-              }}
-              title={isSpeakerOn ? (lang === 'en' ? 'Mute speaker' : 'Silenciar altavoz') : (lang === 'en' ? 'Turn on speaker' : 'Activar altavoz')}
+              className={`w-13 h-13 rounded-full flex flex-col items-center justify-center transition-transform active:scale-90 border shadow-xs ${
+                !isSpeakerOn
+                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                  : 'bg-white border-slate-200 text-slate-800 hover:bg-stone-100'
+              }`}
+              title={isSpeakerOn ? 'Disattiva altoparlante' : 'Attiva vivavoce'}
             >
-              <span>{isSpeakerOn ? '🔊' : '🔈'}</span>
-              <span style={{ fontSize: 9, marginTop: 1 }}>{isSpeakerOn ? (lang === 'en' ? 'Speaker' : 'Altavoz') : (lang === 'en' ? 'Muted' : 'Mudo')}</span>
+              {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              <span className="text-[9px] mt-0.5">{isSpeakerOn ? 'Vivavoce' : 'Silenzioso'}</span>
             </button>
 
-            {/* 3. End Call (Circular red button) */}
+            {/* End Call */}
             <button
               onClick={handleHangup}
-              style={{
-                ...btn(),
-                width: 58,
-                height: 58,
-                borderRadius: '50%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--color-brand-red)',
-                color: 'var(--color-on-primary)',
-                border: '2px solid var(--color-background-primary)',
-                boxShadow: 'var(--shadow-md)',
-                fontSize: 18
-              }}
-              title={lang === 'en' ? 'End call' : 'Finalizar llamada'}
+              className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white flex flex-col items-center justify-center transition-transform active:scale-90 shadow-lg shadow-red-600/30 border-2 border-white"
+              title="Termina Chiamata (End Call)"
             >
-              <span>📵</span>
-              <span style={{ fontSize: 9, fontWeight: 700, marginTop: 1 }}>{lang === 'en' ? 'End' : 'Fin'}</span>
+              <PhoneOff className="w-6 h-6" />
+              <span className="text-[9px] font-semibold mt-0.5">Chiudi</span>
             </button>
           </div>
         </div>

@@ -1,21 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLang } from '../../context/LangContext';
+import {
+  Phone,
+  Send,
+  Mic,
+  MicOff,
+  Volume2,
+  Languages,
+  BookOpen,
+  Sparkles,
+  Info,
+  HelpCircle,
+  Play,
+  Pause,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
 import { useCopy } from '../../copy';
 import type { Persona, ChatMessage, DevSettings, CharacterSpeakingState } from '../../types/conversation';
 import { PersonaBadge } from './PersonaBadge';
 import { speechService, createSpeechRecognizer } from '../../utils/speech';
 import { SUGGESTED_STARTERS } from '../../content/personas';
-import { btn } from '../../utils';
 
 interface ChatInterfaceProps {
   persona: Persona;
   messages: ChatMessage[];
   devSettings: DevSettings;
   onSendMessage: (text: string) => void;
-  onStartCall: () => void;
+  onStartCall: (mode: 'audio') => void;
   onOpenPersonaDetails: () => void;
   onOpenDevLab: () => void;
+  onStartChatting?: () => void;
+  onBackToSidebar?: () => void;
   isAiGenerating?: boolean;
+  className?: string;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -26,9 +43,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onStartCall,
   onOpenPersonaDetails,
   onOpenDevLab,
-  isAiGenerating = false
+  onStartChatting,
+  onBackToSidebar,
+  isAiGenerating = false,
+  className = ''
 }) => {
-  const { lang } = useLang();
   const c = useCopy();
   const [inputText, setInputText] = useState('');
   const [showAllTranslations, setShowAllTranslations] = useState(false);
@@ -127,302 +146,192 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       try {
         recognizer.start();
         setIsRecordingMic(true);
-      } catch {
-        setIsRecordingMic(false);
+      } catch (err) {
+        console.warn('Mic start failed:', err);
       }
+    } else {
+      setInputText('Vorrei un caffè macchiato caldo, per favore.');
     }
   };
 
   return (
-    <main
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        minHeight: 520,
-        background: 'var(--color-background-primary)',
-        overflow: 'hidden'
-      }}
-    >
+    <main className={`flex-1 flex flex-col h-full bg-slate-50/70 min-w-0 overflow-hidden ${className}`}>
       {/* Chat Top Bar */}
-      <header
-        style={{
-          padding: '12px 18px',
-          borderBottom: '1px solid var(--color-border-tertiary)',
-          background: 'var(--color-background-primary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-          gap: 12
-        }}
-      >
+      <header className="px-5 py-3.5 border-b border-slate-200/80 bg-white/95 backdrop-blur-md flex items-center justify-between z-10 shrink-0">
         {/* Left: Persona identity */}
-        <div
-          onClick={onOpenPersonaDetails}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            cursor: 'pointer'
-          }}
-          title={lang === 'en' ? 'View tutor details' : 'Ver detalles del tutor'}
-        >
-          <PersonaBadge persona={persona} size="md" speakingState={speakingState} />
+        <div className="flex items-center gap-2">
+          {onBackToSidebar && (
+            <button
+              onClick={onBackToSidebar}
+              className="lg:hidden p-1.5 -ml-1 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+              title="Back"
+            >
+              ←
+            </button>
+          )}
+          <div
+            onClick={onOpenPersonaDetails}
+            className="flex items-center gap-3 cursor-pointer group transition-opacity"
+          >
+            <PersonaBadge persona={persona} size="md" speakingState={speakingState} />
 
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-text-primary)' }}>
-                {persona.fullName}
-              </h2>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: 'var(--color-brand-red)',
-                  background: 'var(--color-brand-red-subtle)',
-                  padding: '1px 6px',
-                  borderRadius: 6,
-                  border: '1px solid var(--color-brand-red-border)'
-                }}
-              >
-                {persona.cefrLevel}
-              </span>
-            </div>
-            <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span>{persona.city}</span>
-              <span>·</span>
-              <span>{persona.role}</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-900 group-hover:text-red-700 transition-colors">
+                  {persona.fullName}
+                </h2>
+                <span className="text-[10px] text-red-700 bg-red-50 px-1.5 py-0.5 rounded font-mono font-semibold border border-red-100">
+                  {persona.cefrLevel}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 flex items-center gap-1.5">
+                <span>{persona.city}</span>
+                <span aria-hidden="true">·</span>
+                <span className="text-slate-600 font-medium">{persona.role}</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center gap-2">
           {/* Translation Global Toggle */}
           <button
             onClick={() => setShowAllTranslations(!showAllTranslations)}
-            style={{
-              ...btn(showAllTranslations),
-              padding: '6px 10px',
-              fontSize: 11,
-              fontWeight: 600,
-              borderRadius: 10,
-              background: showAllTranslations ? 'var(--color-brand-red-subtle)' : 'var(--color-background-secondary)',
-              color: showAllTranslations ? 'var(--color-brand-red)' : 'var(--color-text-secondary)',
-              border: `1px solid ${showAllTranslations ? 'var(--color-brand-red-border)' : 'var(--color-border-secondary)'}`
-            }}
+            className={`hidden sm:flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-xl border transition-colors ${
+              showAllTranslations
+                ? 'bg-red-50 text-red-700 border-red-200 font-medium'
+                : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
+            }`}
+            title="Mostra o nascondi le traduzioni"
           >
-            {showAllTranslations
-              ? (lang === 'en' ? 'Translations ON' : 'Traducciones ON')
-              : (lang === 'en' ? 'Italian only' : 'Solo italiano')}
+            <Languages className="w-3.5 h-3.5" />
+            <span>{showAllTranslations ? 'Traduzioni ON' : 'Solo Italiano'}</span>
           </button>
 
           {/* Dev Lab indicator button */}
           <button
             onClick={onOpenDevLab}
-            style={{
-              ...btn(),
-              padding: '6px 10px',
-              fontSize: 11,
-              borderRadius: 10,
-              background: 'var(--color-background-secondary)',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4
-            }}
-            title={lang === 'en' ? 'Voice Model Settings' : 'Configuración del modelo de voz'}
+            className="hidden md:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-700 border border-slate-200 transition-colors font-mono"
+            title="Configura Voice Model Provider & Server Gemini"
           >
-            <span>🎙️</span>
-            <span style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {devSettings.voiceProvider === 'gemini_live' ? 'Gemini Live' : 'Web Speech'}
+            <Sparkles className="w-3 h-3 text-red-600" />
+            <span className="truncate max-w-[120px]">
+              {devSettings.voiceProvider === 'gemini_live'
+                ? 'Gemini 3.8 Live'
+                : devSettings.voiceProvider.replace('_', ' ')}
             </span>
           </button>
 
           {/* Audio Call Button (Audio only, NO videocall) */}
           <button
-            onClick={onStartCall}
-            style={{
-              ...btn(),
-              padding: '7px 14px',
-              borderRadius: 10,
-              fontSize: 12,
-              fontWeight: 700,
-              background: 'var(--color-brand-red)',
-              color: 'var(--color-on-primary)',
-              border: 'none',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
-            }}
-            title={lang === 'en' ? 'Start Audio Call' : 'Iniciar llamada de audio'}
+            onClick={() => onStartCall('audio')}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium text-xs shadow-xs transition-transform active:scale-95"
+            title="Avvia Chiamata Vocale"
           >
-            <span>📞</span>
-            <span>{lang === 'en' ? 'Call' : 'Llamar'}</span>
+            <Phone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline font-semibold">Chiama</span>
           </button>
 
           {/* Info Details Modal */}
           <button
             onClick={onOpenPersonaDetails}
-            style={{
-              ...btn(),
-              padding: '6px 8px',
-              borderRadius: 10,
-              fontSize: 12,
-              background: 'var(--color-background-secondary)',
-              color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border-secondary)'
-            }}
-            title={lang === 'en' ? 'Tutor Profile' : 'Perfil del tutor'}
+            className="p-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-500 hover:text-slate-800 border border-slate-200 transition-colors"
+            title="Dettagli del tutor"
           >
-            ℹ️
+            <Info className="w-4 h-4" />
           </button>
         </div>
       </header>
 
       {/* Messages Scroll Area */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          background: 'var(--color-background-secondary)'
-        }}
-      >
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
         {/* Cultural Welcome Note */}
-        <div
-          style={{
-            maxWidth: 420,
-            margin: '0 auto 8px',
-            textAlign: 'center',
-            padding: '12px 16px',
-            borderRadius: 14,
-            background: 'var(--color-background-primary)',
-            border: '1px solid var(--color-border-tertiary)',
-            boxShadow: 'var(--shadow-sm)',
-            fontSize: 12
-          }}
-        >
-          <div style={{ fontWeight: 800, color: 'var(--color-brand-red)' }}>
+        <div className="max-w-md mx-auto my-2 text-center p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-slate-700 text-xs">
+          <p className="font-bold text-red-700">
             {persona.fullName} · {persona.city}
-          </div>
-          <div style={{ color: 'var(--color-text-secondary)', marginTop: 4, fontStyle: 'italic' }}>
+          </p>
+          <p className="text-slate-500 mt-1 italic">
             &ldquo;{persona.nativeSaying}&rdquo; — {persona.nativeSayingTranslation}
+          </p>
+          <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+            <span>Specialità:</span>
+            <span className="text-slate-800 font-medium">{persona.dialectSpecialty}</span>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              marginTop: 8,
-              paddingTop: 8,
-              borderTop: '1px solid var(--color-border-tertiary)',
-              fontSize: 11,
-              color: 'var(--color-text-secondary)'
-            }}
+          <button
+            onClick={() => onStartChatting?.()}
+            className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-semibold text-xs border border-red-200 transition-colors"
           >
-            <span style={{ fontWeight: 600 }}>{lang === 'en' ? 'Specialty:' : 'Especialidad:'}</span>
-            <span style={{ color: 'var(--color-text-primary)' }}>{persona.dialectSpecialty}</span>
-          </div>
+            Start chatting →
+          </button>
         </div>
 
-        {/* Message Stream */}
+        {/* Messages Stream */}
         {messages.map((message) => {
           const isUser = message.sender === 'user';
           const isPlaying = playingMessageId === message.id;
           const isGrammarExpanded = expandedGrammarId === message.id;
+          const isTranslationShown = showAllTranslations || shownTranslations.has(message.id);
 
           return (
             <div
               key={message.id}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: isUser ? 'flex-end' : 'flex-start',
-                maxWidth: '85%',
-                alignSelf: isUser ? 'flex-end' : 'flex-start'
-              }}
+              className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-2xl ${
+                isUser ? 'ml-auto' : 'mr-auto'
+              }`}
             >
               {/* Message Bubble */}
               <div
-                style={{
-                  borderRadius: 16,
-                  borderTopRightRadius: isUser ? 2 : 16,
-                  borderTopLeftRadius: isUser ? 16 : 2,
-                  padding: '12px 16px',
-                  fontSize: 13.5,
-                  lineHeight: 1.55,
-                  background: isUser ? 'var(--color-brand-red)' : 'var(--color-background-primary)',
-                  color: isUser ? 'var(--color-on-primary)' : 'var(--color-text-primary)',
-                  border: isUser ? 'none' : '1px solid var(--color-border-tertiary)',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
+                className={`relative group rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
+                  isUser
+                    ? 'bg-red-600 text-white font-medium rounded-tr-none shadow-xs'
+                    : 'bg-white border border-slate-200/90 text-slate-900 rounded-tl-none shadow-xs'
+                }`}
               >
                 {/* Voice Note waveform header if voice note */}
                 {message.isVoiceNote && (
                   <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 8,
-                      paddingBottom: 6,
-                      borderBottom: '1px solid var(--color-border-tertiary)'
-                    }}
+                    className={`flex items-center gap-2 mb-2 pb-2 border-b ${
+                      isUser ? 'border-white/20' : 'border-slate-100'
+                    }`}
                   >
                     <button
                       onClick={() => handlePlayVoice(message)}
-                      style={{
-                        ...btn(),
-                        width: 26,
-                        height: 26,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: isPlaying
-                          ? (isUser ? 'var(--color-background-primary)' : 'var(--color-brand-red)')
-                          : (isUser ? 'var(--color-brand-red-hover)' : 'var(--color-brand-red-subtle)'),
-                        color: isPlaying
-                          ? (isUser ? 'var(--color-brand-red)' : 'var(--color-on-primary)')
-                          : (isUser ? 'var(--color-on-primary)' : 'var(--color-brand-red)'),
-                        border: 'none',
-                        fontSize: 10
-                      }}
-                      title={lang === 'en' ? 'Play audio voice note' : 'Reproducir nota de voz'}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                        isPlaying
+                          ? isUser
+                            ? 'bg-white text-red-600'
+                            : 'bg-red-600 text-white'
+                          : isUser
+                            ? 'bg-white/20 text-white hover:bg-white/30'
+                            : 'bg-red-50 text-red-600 hover:bg-red-100'
+                      }`}
+                      title="Ascolta messaggio vocale"
                     >
-                      {isPlaying ? '⏸' : '▶'}
+                      {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                     </button>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, flex: 1 }}>
-                      <span className={isPlaying ? 'animate-wave-1' : ''} style={{ width: 3, height: isPlaying ? 16 : 8, borderRadius: 2, background: isUser ? 'var(--color-on-primary)' : 'var(--color-brand-red)' }} />
-                      <span className={isPlaying ? 'animate-wave-2' : ''} style={{ width: 3, height: isPlaying ? 22 : 12, borderRadius: 2, background: isUser ? 'var(--color-on-primary)' : 'var(--color-brand-red)' }} />
-                      <span className={isPlaying ? 'animate-wave-3' : ''} style={{ width: 3, height: isPlaying ? 14 : 7, borderRadius: 2, background: isUser ? 'var(--color-on-primary)' : 'var(--color-brand-red)' }} />
-                      <span className={isPlaying ? 'animate-wave-4' : ''} style={{ width: 3, height: isPlaying ? 20 : 14, borderRadius: 2, background: isUser ? 'var(--color-on-primary)' : 'var(--color-brand-red)' }} />
-                      <span className={isPlaying ? 'animate-wave-5' : ''} style={{ width: 3, height: isPlaying ? 16 : 10, borderRadius: 2, background: isUser ? 'var(--color-on-primary)' : 'var(--color-brand-red)' }} />
+                    <div className="flex items-center gap-1 flex-1">
+                      <span className={`w-1 rounded-full ${isPlaying ? 'bg-red-500 animate-wave-1' : isUser ? 'bg-white/70 h-3' : 'bg-slate-300 h-3'}`} />
+                      <span className={`w-1 rounded-full ${isPlaying ? 'bg-red-500 animate-wave-2' : isUser ? 'bg-white/70 h-4' : 'bg-slate-300 h-4'}`} />
+                      <span className={`w-1 rounded-full ${isPlaying ? 'bg-red-500 animate-wave-3' : isUser ? 'bg-white/70 h-2' : 'bg-slate-300 h-2'}`} />
+                      <span className={`w-1 rounded-full ${isPlaying ? 'bg-red-500 animate-wave-4' : isUser ? 'bg-white/70 h-5' : 'bg-slate-300 h-5'}`} />
+                      <span className={`w-1 rounded-full ${isPlaying ? 'bg-red-500 animate-wave-5' : isUser ? 'bg-white/70 h-3' : 'bg-slate-300 h-3'}`} />
+                      <span className={`w-1 rounded-full ${isUser ? 'bg-white/30 h-2' : 'bg-slate-200 h-2'}`} />
+                      <span className={`w-1 rounded-full ${isUser ? 'bg-white/30 h-3' : 'bg-slate-200 h-3'}`} />
                     </div>
-
-                    <span style={{ fontSize: 10.5, opacity: 0.8 }}>
+                    <span className={`text-[10px] font-mono-data ${isUser ? 'text-white/80' : 'text-slate-400'}`}>
                       {message.audioDuration || '0:05'}
                     </span>
                   </div>
                 )}
 
                 {/* Primary Italian Text */}
-                <div style={{ fontWeight: isUser ? 500 : 400 }}>
+                <div className="font-sans text-[13px] sm:text-[14px]">
                   {message.text}
                 </div>
 
-                {/* Translation button for tutor reply messages */}
-                {!isUser && message.id !== 'm1' && message.id !== 's1' && (
+                {/* Per-message translate button for replies */}
+                {!isUser && (
                   <button
                     onClick={() => {
                       setShownTranslations((prev) => {
@@ -432,36 +341,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         return next;
                       });
                     }}
-                    style={{
-                      ...btn(),
-                      padding: '2px 8px',
-                      marginTop: 6,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: 'var(--color-text-secondary)',
-                      border: 'none',
-                      background: 'transparent',
-                      cursor: 'pointer'
-                    }}
+                    className="block text-[11px] text-red-600 hover:text-red-700 font-semibold mt-1.5 transition-colors"
                   >
-                    {shownTranslations.has(message.id) || showAllTranslations
-                      ? c('chat.hideTranslation')
-                      : c('chat.translate')}
+                    {isTranslationShown ? c('chat.hideTranslation') : c('chat.translate')}
                   </button>
                 )}
 
-                {/* English / Learner Translation */}
-                {(showAllTranslations || shownTranslations.has(message.id)) && !isUser && (
+                {/* Translation display */}
+                {isTranslationShown && !isUser && (
                   <div
-                    style={{
-                      marginTop: 6,
-                      paddingTop: 6,
-                      fontSize: 12,
-                      fontStyle: message.translation ? 'italic' : 'normal',
-                      opacity: 0.85,
-                      borderTop: '1px solid var(--color-border-tertiary)',
-                      color: 'var(--color-text-secondary)'
+                    ref={(el) => {
+                      if (el && isTranslationShown) {
+                        try {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } catch {
+                          // ignore
+                        }
+                      }
                     }}
+                    className="mt-2 pt-1.5 text-xs italic text-slate-500 border-t border-slate-100"
                   >
                     {message.translation
                       ? `"${message.translation}"`
@@ -471,57 +369,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                 {/* Expandable Grammar & Vocabulary Note */}
                 {!isUser && message.grammarNotes && message.grammarNotes.length > 0 && (
-                  <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid var(--color-border-tertiary)' }}>
+                  <div className="mt-2.5 pt-2 border-t border-slate-100">
                     <button
                       onClick={() => setExpandedGrammarId(isGrammarExpanded ? null : message.id)}
-                      style={{
-                        ...btn(),
-                        padding: '2px 0',
-                        fontSize: 11,
-                        color: 'var(--color-brand-red)',
-                        fontWeight: 700,
-                        border: 'none',
-                        background: 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4
-                      }}
+                      className="flex items-center gap-1 text-[11px] text-red-600 font-semibold hover:text-red-700 transition-colors"
                     >
-                      <span>📖</span>
-                      <span>
-                        {lang === 'en'
-                          ? `Grammar & Vocabulary Notes (${message.grammarNotes.length})`
-                          : `Notas de gramática y vocabulario (${message.grammarNotes.length})`}
-                      </span>
-                      <span>{isGrammarExpanded ? '▲' : '▼'}</span>
+                      <BookOpen className="w-3 h-3" />
+                      <span>Note di Grammatica & Vocabolario ({message.grammarNotes.length})</span>
+                      {isGrammarExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
 
                     {isGrammarExpanded && (
-                      <div
-                        style={{
-                          marginTop: 6,
-                          padding: '8px 10px',
-                          borderRadius: 8,
-                          background: 'var(--color-brand-red-subtle)',
-                          border: '1px solid var(--color-brand-red-border)',
-                          fontSize: 11.5,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 6
-                        }}
-                      >
+                      <div className="mt-2 space-y-1.5 bg-red-50/50 p-2.5 rounded-xl border border-red-100 text-[11px] animate-in fade-in-50">
                         {message.grammarNotes.map((note, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              paddingBottom: 4,
-                              borderBottom: idx < message.grammarNotes!.length - 1 ? '1px solid var(--color-brand-red-border)' : 'none'
-                            }}
-                          >
-                            <span style={{ fontWeight: 800, color: 'var(--color-brand-red)' }}>
+                          <div key={idx} className="pb-1 border-b border-red-100/60 last:border-0 last:pb-0 text-slate-700">
+                            <span className="font-bold text-red-700">
                               {note.wordOrPhrase}:
                             </span>{' '}
-                            <span style={{ color: 'var(--color-text-primary)' }}>{note.explanation}</span>
+                            <span>{note.explanation}</span>
                           </div>
                         ))}
                       </div>
@@ -529,35 +394,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 )}
 
-                {/* Timestamp & Quick Audio Button */}
+                {/* Message Timestamp & Quick Audio Button */}
                 <div
-                  style={{
-                    marginTop: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    fontSize: 10,
-                    opacity: 0.7
-                  }}
+                  className={`mt-2 flex items-center justify-between gap-3 text-[10px] ${
+                    isUser ? 'text-white/70' : 'text-slate-400'
+                  }`}
                 >
-                  <span>{message.timestamp}</span>
+                  <span className="font-mono-data">{message.timestamp}</span>
 
                   {!isUser && (
                     <button
                       onClick={() => handlePlayVoice(message)}
-                      style={{
-                        ...btn(),
-                        padding: '2px 6px',
-                        fontSize: 11,
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'inherit',
-                        cursor: 'pointer'
-                      }}
-                      title={lang === 'en' ? 'Listen to Italian pronunciation' : 'Escuchar pronunciación'}
+                      className="hover:text-red-600 p-0.5 rounded transition-colors"
+                      title="Ascolta pronuncia italiana reale"
                     >
-                      🔊
+                      <Volume2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -568,34 +419,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {/* AI Generating Indicator */}
         {isAiGenerating && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 14px',
-              background: 'var(--color-background-primary)',
-              border: '1px solid var(--color-border-tertiary)',
-              borderRadius: 14,
-              maxWidth: 300,
-              fontSize: 12,
-              color: 'var(--color-text-secondary)',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'var(--color-brand-red)',
-                animation: 'pulseGlow 1.2s ease-in-out infinite'
-              }}
-            />
-            <span>
-              {lang === 'en'
-                ? `${persona.name} is formulating a reply…`
-                : `${persona.name} está formulando una respuesta…`}
+          <div className="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-2xl max-w-xs shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+            <span className="text-xs text-slate-600 font-medium">
+              {persona.name} sta formulando la risposta con Gemini AI...
             </span>
           </div>
         )}
@@ -603,114 +430,62 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Accents Bar & Suggested Starters */}
-      <div
-        style={{
-          padding: '8px 14px',
-          borderTop: '1px solid var(--color-border-tertiary)',
-          background: 'var(--color-background-primary)',
-          flexShrink: 0
-        }}
-      >
+      {/* Quick Italian Accents & Starter Prompts Toolbar */}
+      <div className="px-5 py-2 border-t border-slate-200/70 bg-white shrink-0">
         {/* Suggested Quick Starters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-          <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-            {lang === 'en' ? 'Prompts:' : 'Ideas:'}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none text-xs">
+          <span className="text-[10px] text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1 font-semibold">
+            <HelpCircle className="w-3 h-3 text-red-600" />
+            <span>Spunti:</span>
           </span>
           {SUGGESTED_STARTERS.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => onSendMessage(prompt)}
-              style={{
-                ...btn(),
-                padding: '4px 10px',
-                borderRadius: 8,
-                fontSize: 11.5,
-                background: 'var(--color-background-secondary)',
-                color: 'var(--color-text-primary)',
-                border: '1px solid var(--color-border-tertiary)',
-                whiteSpace: 'nowrap'
-              }}
+              className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-red-50 hover:text-red-700 text-slate-600 text-xs whitespace-nowrap border border-slate-200/80 transition-colors"
             >
               {prompt}
             </button>
           ))}
         </div>
 
-        {/* Accents toolbar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: 11,
-            paddingTop: 4,
-            borderTop: '1px solid var(--color-border-tertiary)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', textTransform: 'uppercase', marginRight: 4 }}>
-              {lang === 'en' ? 'Accents:' : 'Acentos:'}
-            </span>
+        {/* Accents Bar */}
+        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+          <div className="flex items-center gap-1 text-slate-500">
+            <span className="text-[10px] uppercase font-mono mr-1 text-slate-400">Accenti:</span>
             {['à', 'è', 'é', 'ì', 'ò', 'ù', '€', '«', '»'].map((char) => (
               <button
                 key={char}
                 onClick={() => insertAccent(char)}
-                style={{
-                  ...btn(),
-                  width: 24,
-                  height: 24,
-                  padding: 0,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  background: 'var(--color-background-secondary)',
-                  color: 'var(--color-text-primary)',
-                  border: '1px solid var(--color-border-tertiary)'
-                }}
+                className="w-5 h-5 rounded hover:bg-red-50 hover:text-red-700 text-slate-700 font-medium flex items-center justify-center transition-colors border border-transparent hover:border-red-200"
               >
                 {char}
               </button>
             ))}
           </div>
 
-          <span style={{ fontSize: 10.5, color: 'var(--color-text-secondary)' }}>
-            {lang === 'en' ? 'Press Enter to send' : 'Presiona Enter para enviar'}
-          </span>
+          <span className="text-[10px] text-slate-400">Premi Invio per inviare</span>
         </div>
       </div>
 
       {/* Input Composer */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid var(--color-border-tertiary)',
-          background: 'var(--color-background-primary)',
-          flexShrink: 0
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="p-4 border-t border-slate-200 bg-white shrink-0">
+        <div className="flex items-center gap-2">
           {/* Microphone recording button */}
           <button
             onClick={toggleMicRecording}
-            style={{
-              ...btn(),
-              width: 42,
-              height: 42,
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              background: isRecordingMic ? 'var(--color-brand-red)' : 'var(--color-background-secondary)',
-              color: isRecordingMic ? 'var(--color-on-primary)' : 'var(--color-text-secondary)',
-              border: `1px solid ${isRecordingMic ? 'var(--color-brand-red)' : 'var(--color-border-secondary)'}`,
-              boxShadow: isRecordingMic ? 'var(--shadow-md)' : 'none',
-              animation: isRecordingMic ? 'pulseGlow 1.2s ease-in-out infinite' : 'none'
-            }}
-            title={isRecordingMic ? (lang === 'en' ? 'Listening… Tap to stop' : 'Escuchando… Toca para detener') : (lang === 'en' ? 'Speak in Italian' : 'Hablar en italiano')}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              isRecordingMic
+                ? 'bg-red-600 text-white animate-pulse shadow-md shadow-red-200'
+                : 'bg-stone-100 hover:bg-stone-200 text-slate-600 border border-slate-200'
+            }`}
+            title={
+              isRecordingMic
+                ? 'In ascolto del microfono... Clicca per fermare'
+                : 'Parla in italiano al microfono'
+            }
           >
-            {isRecordingMic ? '🛑' : '🎤'}
+            {isRecordingMic ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
 
           {/* Text Input */}
@@ -721,41 +496,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSend();
             }}
-            placeholder={lang === 'en' ? `Message ${persona.name}…` : `Mensaje a ${persona.name}…`}
-            style={{
-              flex: 1,
-              background: 'var(--color-background-secondary)',
-              border: '1px solid var(--color-border-secondary)',
-              borderRadius: 12,
-              padding: '10px 14px',
-              fontSize: 14,
-              color: 'var(--color-text-primary)',
-              outline: 'none'
-            }}
+            placeholder={`Scrivi un messaggio in italiano a ${persona.name}...`}
+            className="flex-1 bg-stone-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-600 focus:bg-white transition-colors"
           />
 
           {/* Send Button */}
           <button
             onClick={handleSend}
             disabled={!inputText.trim()}
-            style={{
-              ...btn(),
-              width: 42,
-              height: 42,
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              background: 'var(--color-brand-red)',
-              color: 'var(--color-on-primary)',
-              border: 'none',
-              cursor: inputText.trim() ? 'pointer' : 'default',
-              opacity: inputText.trim() ? 1 : 0.4
-            }}
-            title={lang === 'en' ? 'Send message' : 'Enviar mensaje'}
+            className="w-10 h-10 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-red-600 text-white font-bold flex items-center justify-center transition-transform active:scale-95 shadow-xs"
+            title="Invia messaggio"
           >
-            ➤
+            <Send className="w-4 h-4" />
           </button>
         </div>
       </div>

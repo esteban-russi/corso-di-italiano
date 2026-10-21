@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
-import { useLang } from '../../context/LangContext';
+import {
+  X,
+  MapPin,
+  Volume2,
+  Phone,
+  BookOpen,
+  Sparkles,
+  Quote
+} from 'lucide-react';
 import type { Persona } from '../../types/conversation';
 import { PersonaBadge } from './PersonaBadge';
 import { speechService } from '../../utils/speech';
-import { btn } from '../../utils';
 
 interface PersonaProfileModalProps {
   persona: Persona;
   isOpen: boolean;
   onClose: () => void;
-  onStartCall: () => void;
+  onStartCall: (mode: 'audio') => void;
 }
 
 export const PersonaProfileModal: React.FC<PersonaProfileModalProps> = ({
@@ -18,7 +25,6 @@ export const PersonaProfileModal: React.FC<PersonaProfileModalProps> = ({
   onClose,
   onStartCall
 }) => {
-  const { lang } = useLang();
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   if (!isOpen) return null;
@@ -35,156 +41,91 @@ export const PersonaProfileModal: React.FC<PersonaProfileModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--color-scrim)',
-        backdropFilter: 'blur(4px)',
-        padding: '16px'
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 480,
-          background: 'var(--color-background-primary)',
-          border: '1px solid var(--color-border-primary)',
-          borderRadius: 24,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '90vh',
-          boxShadow: 'var(--shadow-lg)'
-        }}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header with Italian Red Accent */}
-        <div
-          style={{
-            position: 'relative',
-            padding: '20px 24px',
-            background: 'var(--color-brand-red)',
-            color: 'var(--color-on-primary)',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 16
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <PersonaBadge persona={persona} size="lg" speakingState={isPlayingAudio ? 'speaking' : 'idle'} />
+        <div className="relative p-6 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <PersonaBadge
+              persona={persona}
+              size="lg"
+              speakingState={isPlayingAudio ? 'speaking' : 'idle'}
+            />
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h3 style={{ fontSize: 20, fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--color-on-primary)' }}>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold tracking-tight font-editorial">
                   {persona.fullName}
                 </h3>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: 12,
-                    background: 'var(--color-brand-red-hover)',
-                    color: 'var(--color-on-primary)'
-                  }}
-                >
+                <span className="text-xs bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full font-mono font-semibold">
                   {persona.cefrLevel}
                 </span>
               </div>
-              <p style={{ fontSize: 13, opacity: 0.9, marginTop: 2 }}>{persona.role}</p>
-              <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span>📍</span>
-                <span>{persona.city}, {persona.region}</span>
+              <p className="text-sm text-red-100">{persona.role}</p>
+              <div className="flex items-center gap-1.5 text-xs text-red-100/90 mt-1">
+                <MapPin className="w-3.5 h-3.5" />
+                <span>
+                  {persona.city}, {persona.region}
+                </span>
               </div>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            style={{
-              ...btn(),
-              padding: '6px 10px',
-              borderRadius: 8,
-              fontSize: 14,
-              background: 'var(--color-brand-red-hover)',
-              color: 'var(--color-on-primary)',
-              border: 'none'
-            }}
+            className="p-1.5 rounded-full bg-black/20 hover:bg-black/30 text-white transition-colors"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Motto & Philosophy */}
-          <div
-            style={{
-              padding: '14px 16px',
-              borderRadius: 14,
-              background: 'var(--color-brand-red-subtle)',
-              border: '1px solid var(--color-brand-red-border)'
-            }}
-          >
-            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-brand-red)', marginBottom: 4 }}>
-              {lang === 'en' ? 'Motto & Philosophy' : 'Lema y filosofía'}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 text-slate-700 text-xs sm:text-sm">
+          {/* Native Saying Card */}
+          <div className="p-4 rounded-2xl bg-red-50/50 border border-red-100 relative">
+            <Quote className="w-5 h-5 text-red-300 absolute top-3 right-3" />
+            <div className="text-[11px] uppercase tracking-wider text-red-700 font-bold mb-1">
+              Motto & Filosofia
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, fontStyle: 'italic', color: 'var(--color-text-primary)' }}>
+            <p className="text-base font-editorial italic text-slate-900">
               &ldquo;{persona.nativeSaying}&rdquo;
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 4 }}>
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
               {persona.nativeSayingTranslation}
-            </div>
+            </p>
           </div>
 
           {/* Bio */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text-secondary)', marginBottom: 6 }}>
-              {lang === 'en' ? 'About' : 'Acerca de'}
-            </div>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--color-text-primary)' }}>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-1.5 flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-red-600" />
+              <span>Chi Sono</span>
+            </h4>
+            <p className="text-slate-600 leading-relaxed text-xs sm:text-sm">
               {persona.bio}
             </p>
           </div>
 
           {/* Dialect and Style */}
-          <div
-            style={{
-              padding: '12px 14px',
-              borderRadius: 12,
-              background: 'var(--color-background-secondary)',
-              border: '1px solid var(--color-border-tertiary)'
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text-primary)', marginBottom: 4 }}>
-              {lang === 'en' ? 'Language Specialty' : 'Especialidad lingüística'}
+          <div className="p-3.5 rounded-xl bg-stone-50 border border-slate-200">
+            <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-red-600" />
+              <span>Stile Linguistico & Dialetto</span>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs text-slate-600">
               {persona.dialectSpecialty}
             </p>
           </div>
 
           {/* Topics */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
-              {lang === 'en' ? 'Conversation Topics' : 'Temas de conversación'}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2">
+              Argomenti di Conversazione
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
               {persona.topics.map((t, idx) => (
                 <span
                   key={idx}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 8,
-                    background: 'var(--color-background-secondary)',
-                    border: '1px solid var(--color-border-tertiary)',
-                    fontSize: 11.5,
-                    color: 'var(--color-text-primary)'
-                  }}
+                  className="px-2.5 py-1 rounded-lg bg-stone-100 text-slate-700 border border-slate-200 text-xs"
                 >
                   {t}
                 </span>
@@ -192,81 +133,36 @@ export const PersonaProfileModal: React.FC<PersonaProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Voice sample preview */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 14px',
-              borderRadius: 12,
-              background: 'var(--color-background-secondary)',
-              border: '1px solid var(--color-border-tertiary)'
-            }}
-          >
+          {/* Voice sample */}
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-stone-50 border border-slate-200">
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {lang === 'en' ? 'Assigned Voice Model' : 'Modelo de voz asignado'}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>
-                {persona.voiceId}
+              <div className="text-xs font-bold text-slate-900">Voce AI Assegnata</div>
+              <div className="text-[11px] text-slate-500 font-mono-data">
+                {persona.voiceId} (Gemini 3.8 Server)
               </div>
             </div>
-
             <button
               onClick={handlePlayVoiceSample}
               disabled={isPlayingAudio}
-              style={{
-                ...btn(),
-                padding: '7px 14px',
-                borderRadius: 10,
-                fontSize: 11.5,
-                fontWeight: 700,
-                background: 'var(--color-brand-red)',
-                color: 'var(--color-on-primary)',
-                border: 'none',
-                opacity: isPlayingAudio ? 0.6 : 1
-              }}
+              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5 text-xs font-semibold transition-colors shadow-xs disabled:opacity-60"
             >
-              {isPlayingAudio ? '⏳' : '🔊'} {lang === 'en' ? 'Listen' : 'Escuchar'}
+              <Volume2 className="w-3.5 h-3.5" />
+              <span>{isPlayingAudio ? 'In riproduzione...' : 'Ascolta Voce'}</span>
             </button>
           </div>
         </div>
 
-        {/* Modal Actions (Audio Call Only - NO videocall button) */}
-        <div
-          style={{
-            padding: '14px 24px',
-            borderTop: '1px solid var(--color-border-tertiary)',
-            background: 'var(--color-background-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 10
-          }}
-        >
+        {/* Modal Actions (Audio Call ONLY - NO videocall button) */}
+        <div className="p-4 border-t border-slate-200 bg-stone-50 flex items-center justify-end gap-3">
           <button
             onClick={() => {
               onClose();
-              onStartCall();
+              onStartCall('audio');
             }}
-            style={{
-              ...btn(),
-              padding: '9px 20px',
-              borderRadius: 12,
-              fontSize: 13,
-              fontWeight: 800,
-              background: 'var(--color-brand-red)',
-              color: 'var(--color-on-primary)',
-              border: 'none',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs transition-transform active:scale-95 shadow-xs"
           >
-            <span>📞</span>
-            <span>{lang === 'en' ? 'Call' : 'Llamar'}</span>
+            <Phone className="w-4 h-4" />
+            <span>Chiama (Audio)</span>
           </button>
         </div>
       </div>

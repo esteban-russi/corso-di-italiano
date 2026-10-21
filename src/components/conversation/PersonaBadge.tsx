@@ -5,14 +5,14 @@ interface PersonaBadgeProps {
   persona: Persona;
   size?: 'sm' | 'md' | 'lg' | 'call';
   speakingState?: CharacterSpeakingState;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
 export const PersonaBadge: React.FC<PersonaBadgeProps> = ({
   persona,
   size = 'md',
   speakingState = 'idle',
-  style = {}
+  className = ''
 }) => {
   const isSpeaking = speakingState === 'speaking';
   const isListening = speakingState === 'listening';
@@ -26,162 +26,67 @@ export const PersonaBadge: React.FC<PersonaBadgeProps> = ({
     .slice(0, 2)
     .toUpperCase();
 
-  const sizeDimensions = {
-    sm: { width: 40, height: 40, fontSize: 13, radius: 12 },
-    md: { width: 48, height: 48, fontSize: 16, radius: 14 },
-    lg: { width: 64, height: 64, fontSize: 22, radius: 18 },
-    call: { width: 170, height: 170, fontSize: 48, radius: 36 }
-  }[size];
+  const sizeClasses = {
+    sm: 'w-10 h-10 text-xs font-semibold',
+    md: 'w-12 h-12 text-sm font-bold',
+    lg: 'w-16 h-16 text-lg font-bold',
+    call: 'w-44 h-44 sm:w-52 sm:h-52 text-4xl sm:text-5xl font-bold'
+  };
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        width: sizeDimensions.width,
-        height: sizeDimensions.height,
-        ...style
-      }}
-    >
-      {/* Outer audio pulse ring when speaking in call */}
+    <div className={`relative flex items-center justify-center shrink-0 ${sizeClasses[size]} ${className}`}>
+      {/* Outer Audio Pulse Rings when speaking or listening in Call */}
       {isSpeaking && (
         <>
-          <span
-            style={{
-              position: 'absolute',
-              inset: -6,
-              borderRadius: sizeDimensions.radius + 6,
-              background: 'var(--color-brand-red-soft)',
-              opacity: 0.6,
-              animation: 'pulseGlow 1.5s ease-in-out infinite'
-            }}
-          />
-          <span
-            style={{
-              position: 'absolute',
-              inset: -12,
-              borderRadius: sizeDimensions.radius + 12,
-              border: '2px solid var(--color-brand-red-border)',
-              opacity: 0.4,
-              animation: 'pulseGlow 2s ease-in-out infinite'
-            }}
-          />
+          <span className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
+          <span className="absolute -inset-3 rounded-full border-2 border-red-500/30 animate-pulse" />
         </>
       )}
-
       {isListening && (
         <span
-          style={{
-            position: 'absolute',
-            inset: -6,
-            borderRadius: sizeDimensions.radius + 6,
-            border: '2px dashed var(--color-success)',
-            opacity: 0.7,
-            animation: 'pulseGlow 1.8s ease-in-out infinite'
-          }}
+          className="absolute -inset-2 rounded-full border-2 border-dashed border-red-400 animate-spin"
+          style={{ animationDuration: '6s' }}
         />
       )}
-
       {isThinking && (
-        <span
-          style={{
-            position: 'absolute',
-            inset: -6,
-            borderRadius: sizeDimensions.radius + 6,
-            border: '2px solid var(--color-primary)',
-            opacity: 0.7,
-            animation: 'pulseGlow 1.2s ease-in-out infinite'
-          }}
-        />
+        <span className="absolute -inset-2 rounded-full border-2 border-amber-400 animate-pulse" />
       )}
 
-      {/* Monogram Box */}
+      {/* Clean Monogram Circle Container with Italian Red & Stone Accents */}
       <div
-        style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: sizeDimensions.radius,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: isSpeaking ? 'var(--color-brand-red)' : 'var(--color-background-secondary)',
-          color: isSpeaking ? 'var(--color-on-primary)' : 'var(--color-text-primary)',
-          border: `1px solid ${isSpeaking ? 'var(--color-brand-red)' : 'var(--color-border-secondary)'}`,
-          boxShadow: isSpeaking ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-          position: 'relative',
-          overflow: 'hidden',
-          userSelect: 'none',
-          transition: 'all 0.2s ease'
-        }}
+        className={`w-full h-full rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center shadow-xs border border-red-100 ${
+          isSpeaking
+            ? 'bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-red-200'
+            : 'bg-stone-50 hover:bg-stone-100 text-slate-800'
+        } transition-colors select-none relative overflow-hidden`}
       >
-        {/* Subtle city initial watermark in background */}
-        <span
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            fontSize: sizeDimensions.width * 0.9,
-            fontWeight: 900,
-            color: 'var(--color-text-primary)',
-            opacity: 0.04,
-            pointerEvents: 'none'
-          }}
-        >
+        {/* Subtle background monogram watermark */}
+        <span className="absolute text-[80px] font-black text-red-950/5 pointer-events-none select-none">
           {persona.city[0]}
         </span>
 
         {/* Initials */}
-        <span
-          style={{
-            position: 'relative',
-            fontSize: sizeDimensions.fontSize,
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            fontFamily: 'var(--font-sans)'
-          }}
-        >
+        <span className={`relative tracking-tight font-editorial ${isSpeaking ? 'text-white' : 'text-slate-900'}`}>
           {initials}
         </span>
 
-        {/* City Pill for large badge */}
+        {/* Small City Pill on Large Badges */}
         {size === 'call' && (
           <span
-            style={{
-              position: 'relative',
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              marginTop: 6,
-              padding: '2px 10px',
-              borderRadius: 12,
-              background: isSpeaking ? 'var(--color-brand-red-hover)' : 'var(--color-brand-red-subtle)',
-              color: isSpeaking ? 'var(--color-on-primary)' : 'var(--color-brand-red)'
-            }}
+            className={`relative text-xs tracking-widest uppercase mt-2 font-sans font-medium px-2.5 py-0.5 rounded-full ${
+              isSpeaking ? 'bg-white/20 text-white' : 'bg-red-50 text-red-700'
+            }`}
           >
             {persona.city}
           </span>
         )}
       </div>
 
-      {/* Online indicator dot */}
+      {/* Online indicator for small/medium */}
       {size !== 'call' && persona.isOnline && (
         <span
-          style={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: 'var(--color-success)',
-            border: '2px solid var(--color-background-primary)',
-            boxShadow: 'var(--shadow-sm)'
-          }}
-          title={persona.name}
+          className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs"
+          title="Disponibile per conversazione"
         />
       )}
     </div>

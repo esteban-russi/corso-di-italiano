@@ -48,7 +48,17 @@ function loadSaved(): SavedState | null {
   }
 }
 
-export default function Conversation() {
+interface ConversationProps {
+  onNavigate?: (section: 'conversation' | 'verbs-learning' | 'settings') => void;
+  activeSection?: string;
+  streakCount?: number;
+}
+
+export default function Conversation({
+  onNavigate,
+  activeSection = 'conversation',
+  streakCount = 5
+}: ConversationProps) {
   const { lang } = useLang();
   const c = useCopy();
   const saved = useMemo(loadSaved, []);
@@ -62,7 +72,7 @@ export default function Conversation() {
   const [messagesMap, setMessagesMap] = useState<Record<string, ChatMessage[]>>(
     saved?.messagesMap || INITIAL_MESSAGES
   );
-  const [started, setStarted] = useState<boolean>(Boolean(saved?.started));
+  const [started, setStarted] = useState<boolean>(true);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   // Active call state (audio only, no videocall)
@@ -74,7 +84,13 @@ export default function Conversation() {
   // Modals & drawers
   const [isDevLabOpen, setIsDevLabOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('chat');
+  const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
+
+  useEffect(() => {
+    if (window.location.pathname === '/conversation') {
+      setMobileView('chat');
+    }
+  }, []);
 
   // Dev Settings for AI Models and Voice Lab
   const [devSettings, setDevSettings] = useState<DevSettings>({
@@ -96,24 +112,22 @@ export default function Conversation() {
 
   // Persist conversation state to localStorage
   useEffect(() => {
-    if (started) {
-      const currentList = messagesMap[selectedPersona.id] || [];
-      localStorage.setItem(
-        STORE,
-        JSON.stringify({
-          messagesMap,
-          selectedPersonaId: selectedPersona.id,
-          started: true,
-          // Backwards compatibility for tests expecting msgs array
-          msgs: currentList.map((m) => ({
-            role: m.sender === 'user' ? 'user' : 'marco',
-            text: m.text,
-            translation: m.translation
-          }))
-        })
-      );
-    }
-  }, [messagesMap, selectedPersona.id, started]);
+    const currentList = messagesMap[selectedPersona.id] || [];
+    localStorage.setItem(
+      STORE,
+      JSON.stringify({
+        messagesMap,
+        selectedPersonaId: selectedPersona.id,
+        started: true,
+        // Backwards compatibility for tests expecting msgs array
+        msgs: currentList.map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'marco',
+          text: m.text,
+          translation: m.translation
+        }))
+      })
+    );
+  }, [messagesMap, selectedPersona.id]);
 
   const handleSendMessage = async (text: string) => {
     const userMsg: ChatMessage = {
@@ -232,211 +246,41 @@ export default function Conversation() {
     setMobileView('chat');
   };
 
-  // Welcome Intro View before conversation is started
-  if (!started) {
-    return (
-      <div style={{ textAlign: 'center', padding: '28px 16px' }}>
-        <div style={{ fontSize: 42, marginBottom: 10 }} aria-hidden="true">
-          💬
-        </div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: 6 }}>
-          {lang === 'en' ? 'Talk with Italian Tutors' : 'Habla con tutores italianos'}
-        </div>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.6,
-            maxWidth: 440,
-            margin: '0 auto 20px'
-          }}
-        >
-          {lang === 'en'
-            ? 'Realistic conversational chat and voice calls with native Italian personas. Practice ordering at the bar with Matteo or exploring Roman culture with Sofia.'
-            : 'Conversación realista por chat y llamadas de voz con tutores nativos italianos. Practica pedir en el bar con Matteo o explora la cultura de Roma con Sofia.'}
-        </p>
-
-        {/* Two Character Preview Cards (Matteo & Sofia) */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 12,
-            maxWidth: 480,
-            margin: '0 auto 24px'
-          }}
-        >
-          {personas.map((p) => (
-            <div
-              key={p.id}
-              onClick={() => {
-                setSelectedPersona(p);
-                setStarted(true);
-              }}
-              style={{
-                padding: '16px',
-                borderRadius: 14,
-                background: 'var(--color-background-primary)',
-                border: '1px solid var(--color-border-secondary)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                boxShadow: 'var(--shadow-sm)',
-                transition: 'transform 0.15s ease'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <PersonaBadge persona={p} size="sm" />
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--color-text-primary)' }}>
-                    {p.fullName}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--color-brand-red)', fontWeight: 600 }}>
-                    {p.city} · {p.cefrLevel}
-                  </div>
-                </div>
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                &ldquo;{p.nativeSaying}&rdquo;
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={() => setStarted(true)}
-          className="btn-primary"
-          style={{
-            ...btn(),
-            padding: '13px 32px',
-            fontWeight: 700,
-            fontSize: 15,
-            background: 'var(--color-brand-red)',
-            color: 'var(--color-on-primary)',
-            border: 'none',
-            boxShadow: 'var(--shadow-md)'
-          }}
-        >
-          {lang === 'en' ? 'Start chatting →' : 'Empezar a charlar →'}
-        </button>
-      </div>
-    );
-  }
-
-  // Full Conversational Chat and Calling Interface
+  // Full-Screen Conversational Chat and Calling Interface (matching Italix-AI)
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 16,
-        overflow: 'hidden',
-        border: '1px solid var(--color-border-tertiary)',
-        background: 'var(--color-background-primary)',
-        boxShadow: 'var(--shadow-md)',
-        minHeight: 580
-      }}
-    >
-      {/* Mobile top navigation toggle bar */}
-      <div
-        className="mobile-convo-toggle"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 14px',
-          background: 'var(--color-background-secondary)',
-          borderBottom: '1px solid var(--color-border-tertiary)'
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
+      {/* Left Column: Social Contacts & Stories Sidebar */}
+      <SocialSidebar
+        personas={personas}
+        selectedPersona={selectedPersona}
+        onSelectPersona={handleSelectPersona}
+        onStartCall={(p) => handleStartCall(p)}
+        onOpenDevLab={() => setIsDevLabOpen(true)}
+        onNavigate={(target) => {
+          if (target === 'conversation') {
+            setMobileView('chat');
+          }
+          onNavigate?.(target);
         }}
-      >
-        <button
-          onClick={() => setMobileView(mobileView === 'sidebar' ? 'chat' : 'sidebar')}
-          style={{
-            ...btn(),
-            padding: '5px 12px',
-            fontSize: 11.5,
-            borderRadius: 8,
-            background: 'var(--color-background-primary)',
-            border: '1px solid var(--color-border-secondary)',
-            color: 'var(--color-text-primary)'
-          }}
-        >
-          {mobileView === 'sidebar'
-            ? (lang === 'en' ? '💬 Go to Chat' : '💬 Ir al chat')
-            : (lang === 'en' ? '👥 Contacts' : '👥 Contactos')}
-        </button>
+        activeSection={activeSection}
+        streakCount={streakCount}
+        className={mobileView === 'chat' ? 'hidden lg:flex' : 'flex'}
+      />
 
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-          {selectedPersona.name} ({selectedPersona.city})
-        </span>
-
-        <button
-          onClick={() => {
-            setMessagesMap(INITIAL_MESSAGES);
-            localStorage.removeItem(STORE);
-          }}
-          style={{
-            ...btn(),
-            padding: '5px 10px',
-            fontSize: 11,
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--color-text-secondary)'
-          }}
-          title={lang === 'en' ? 'Reset messages' : 'Restablecer'}
-        >
-          ↺
-        </button>
-      </div>
-
-      {/* Main 2-Column Responsive Body */}
-      <div
-        style={{
-          display: 'flex',
-          flex: 1,
-          height: 600,
-          minHeight: 520,
-          overflow: 'hidden'
-        }}
-      >
-        {/* Left Column: Social Contacts & Stories Sidebar */}
-        <div
-          style={{
-            display: mobileView === 'sidebar' ? 'flex' : undefined,
-            width: mobileView === 'sidebar' ? '100%' : undefined
-          }}
-          className={mobileView === 'chat' ? 'hidden-on-mobile' : ''}
-        >
-          <SocialSidebar
-            personas={personas}
-            selectedPersona={selectedPersona}
-            onSelectPersona={handleSelectPersona}
-            onStartCall={(p) => handleStartCall(p)}
-            onOpenDevLab={() => setIsDevLabOpen(true)}
-          />
-        </div>
-
-        {/* Center/Right Column: Chat Interface */}
-        <div
-          style={{
-            flex: 1,
-            display: mobileView === 'chat' ? 'flex' : undefined,
-            flexDirection: 'column',
-            minWidth: 0
-          }}
-          className={mobileView === 'sidebar' ? 'hidden-on-mobile' : ''}
-        >
-          <ChatInterface
-            persona={selectedPersona}
-            messages={activeMessages}
-            devSettings={devSettings}
-            onSendMessage={handleSendMessage}
-            onStartCall={() => handleStartCall(selectedPersona)}
-            onOpenPersonaDetails={() => setIsProfileModalOpen(true)}
-            onOpenDevLab={() => setIsDevLabOpen(true)}
-            isAiGenerating={isAiGenerating}
-          />
-        </div>
-      </div>
+      {/* Center/Right Column: Chat Interface */}
+      <ChatInterface
+        persona={selectedPersona}
+        messages={activeMessages}
+        devSettings={devSettings}
+        onSendMessage={handleSendMessage}
+        onStartCall={() => handleStartCall(selectedPersona)}
+        onOpenPersonaDetails={() => setIsProfileModalOpen(true)}
+        onOpenDevLab={() => setIsDevLabOpen(true)}
+        onStartChatting={() => setStarted(true)}
+        onBackToSidebar={() => setMobileView('sidebar')}
+        isAiGenerating={isAiGenerating}
+        className={mobileView === 'sidebar' ? 'hidden lg:flex' : 'flex'}
+      />
 
       {/* Full-Screen Phone Call Interface (Audio Call, NO videocall) */}
       {activeCall && (

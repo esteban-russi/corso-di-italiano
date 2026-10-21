@@ -1,19 +1,34 @@
 import React, { useState } from 'react';
+import {
+  Search,
+  Phone,
+  Flame,
+  Play,
+  Sliders,
+  Sparkles,
+  MapPin,
+  BookOpen,
+  Settings as SettingsIcon,
+  MessageSquare
+} from 'lucide-react';
 import { useLang } from '../../context/LangContext';
-import { useStreak } from '../../context/StreakContext';
 import type { Persona, CulturalStory } from '../../types/conversation';
 import { PersonaBadge } from './PersonaBadge';
 import { CULTURAL_STORIES } from '../../content/personas';
 import { speechService } from '../../utils/speech';
-import { btn } from '../../utils';
 
 interface SocialSidebarProps {
   personas: Persona[];
   selectedPersona: Persona;
   onSelectPersona: (persona: Persona) => void;
-  onStartCall: (persona: Persona) => void;
+  onStartCall: (persona: Persona, mode: 'audio') => void;
   onOpenDevLab: () => void;
-  style?: React.CSSProperties;
+  onOpenVerbs?: () => void;
+  onOpenSettings?: () => void;
+  onNavigate?: (section: 'conversation' | 'verbs-learning' | 'settings') => void;
+  activeSection?: string;
+  streakCount?: number;
+  className?: string;
 }
 
 export const SocialSidebar: React.FC<SocialSidebarProps> = ({
@@ -22,10 +37,14 @@ export const SocialSidebar: React.FC<SocialSidebarProps> = ({
   onSelectPersona,
   onStartCall,
   onOpenDevLab,
-  style = {}
+  onOpenVerbs,
+  onOpenSettings,
+  onNavigate,
+  activeSection = 'conversation',
+  streakCount = 5,
+  className = ''
 }) => {
   const { lang } = useLang();
-  const streak = useStreak();
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('all');
   const [activeStory, setActiveStory] = useState<CulturalStory | null>(null);
@@ -59,302 +78,265 @@ export const SocialSidebar: React.FC<SocialSidebarProps> = ({
 
   return (
     <aside
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        maxWidth: 320,
-        background: 'var(--color-background-primary)',
-        borderRight: '1px solid var(--color-border-tertiary)',
-        height: '100%',
-        minHeight: 520,
-        userSelect: 'none',
-        ...style
-      }}
+      className={`w-full lg:w-80 xl:w-96 flex flex-col bg-white border-r border-slate-200 h-full shrink-0 select-none ${className}`}
     >
       {/* Header Bar */}
-      <div
-        style={{
-          padding: '14px 16px',
-          borderBottom: '1px solid var(--color-border-tertiary)',
-          background: 'var(--color-background-primary)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '-0.02em' }}>
+      <div className="p-4 border-b border-slate-100 bg-white">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-editorial font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
               Parlami
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: 'var(--color-brand-red)',
-                background: 'var(--color-brand-red-subtle)',
-                padding: '2px 7px',
-                borderRadius: 6,
-                border: '1px solid var(--color-brand-red-border)'
-              }}
-            >
-              Italiano
+              <span className="text-[11px] font-sans font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-200/60">
+                Italiano
+              </span>
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {/* Streak Counter */}
+          <div className="flex items-center gap-1.5">
+            {/* Learning Streak */}
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '4px 8px',
-                borderRadius: 20,
-                background: 'var(--color-background-secondary)',
-                fontSize: 11,
-                fontWeight: 700,
-                color: 'var(--color-brand-red)'
-              }}
-              title={lang === 'en' ? `${streak.currentStreak} day streak` : `Racha de ${streak.currentStreak} días`}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-xs text-red-600 font-semibold"
+              title={`${streakCount} giorni di fila`}
             >
-              <span>🔥</span>
-              <span>{streak.currentStreak}d</span>
+              <Flame className="w-3.5 h-3.5 fill-red-600" />
+              <span className="font-mono-data">{streakCount}d</span>
             </div>
 
-            {/* Voice Lab Button */}
+            {/* Verbs shortcut button */}
+            {onOpenVerbs && (
+              <button
+                onClick={onOpenVerbs}
+                className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-slate-600 hover:text-red-700 transition-colors"
+                title="Verb lessons"
+              >
+                <BookOpen className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Settings shortcut button */}
+            {onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-slate-600 hover:text-red-700 transition-colors"
+                title="Settings"
+              >
+                <SettingsIcon className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Dev Lab button */}
             <button
               onClick={onOpenDevLab}
-              style={{
-                ...btn(),
-                padding: '5px 8px',
-                fontSize: 12,
-                borderRadius: 8,
-                background: 'var(--color-background-secondary)',
-                border: '1px solid var(--color-border-secondary)',
-                color: 'var(--color-text-primary)'
-              }}
-              title={lang === 'en' ? 'Voice Model Lab & Settings' : 'Laboratorio de voz y configuración'}
+              className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-slate-600 hover:text-red-700 transition-colors"
+              title="Voice Lab & AI Models"
             >
-              ⚙️
+              <Sliders className="w-4 h-4" />
             </button>
           </div>
         </div>
 
+        {/* Top Section Navigation Switcher */}
+        {onNavigate && (
+          <div className="grid grid-cols-3 gap-1 p-1 bg-stone-100 rounded-xl mb-3 text-xs font-semibold">
+            <button
+              onClick={() => onNavigate('conversation')}
+              className={`py-1.5 px-2 rounded-lg transition-colors text-center truncate ${
+                activeSection === 'conversation' || activeSection === 'home'
+                  ? 'bg-white text-red-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {lang === 'en' ? 'Conversation' : 'Conversación'}
+            </button>
+            <button
+              onClick={() => onNavigate('verbs-learning')}
+              className={`py-1.5 px-2 rounded-lg transition-colors text-center truncate ${
+                activeSection === 'verbs-learning'
+                  ? 'bg-white text-red-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {lang === 'en' ? 'Verbs' : 'Verbos'}
+            </button>
+            <button
+              onClick={() => onNavigate('settings')}
+              className={`py-1.5 px-2 rounded-lg transition-colors text-center truncate ${
+                activeSection === 'settings'
+                  ? 'bg-white text-red-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {lang === 'en' ? 'Settings' : 'Ajustes'}
+            </button>
+          </div>
+        )}
+
         {/* Search Input */}
-        <div style={{ position: 'relative', marginBottom: 10 }}>
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={lang === 'en' ? 'Search contacts…' : 'Buscar contactos…'}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              fontSize: 12.5,
-              borderRadius: 10,
-              border: '1px solid var(--color-border-secondary)',
-              background: 'var(--color-background-secondary)',
-              color: 'var(--color-text-primary)',
-              outline: 'none'
-            }}
+            placeholder="Cerca per nome, città o argomento..."
+            className="w-full bg-stone-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:bg-white transition-colors"
           />
         </div>
+      </div>
 
-        {/* CEFR Level Filter Pills */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          {[
-            { id: 'all', label: lang === 'en' ? 'All' : 'Todos' },
-            { id: 'A', label: 'A1-A2' },
-            { id: 'B', label: 'B1-B2' }
-          ].map((pill) => {
-            const active = levelFilter === pill.id;
+      {/* Cultural Audio Stories Bar */}
+      <div className="py-3 px-3 border-b border-slate-100 bg-stone-50/60">
+        <div className="flex items-center justify-between px-1 mb-2">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-red-600" />
+            <span>Espresso Culturale</span>
+          </span>
+          <span className="text-[10px] text-slate-400">Audio pillole</span>
+        </div>
+
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+          {CULTURAL_STORIES.map((story) => {
+            const persona = personas.find((p) => p.id === story.personaId);
+            const isPlaying = activeStory?.id === story.id;
             return (
               <button
-                key={pill.id}
-                onClick={() => setLevelFilter(pill.id)}
-                style={{
-                  ...btn(active),
-                  padding: '3px 10px',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  borderRadius: 14,
-                  background: active ? 'var(--color-brand-red)' : 'var(--color-background-secondary)',
-                  color: active ? 'var(--color-on-primary)' : 'var(--color-text-secondary)',
-                  border: `1px solid ${active ? 'var(--color-brand-red)' : 'var(--color-border-tertiary)'}`
-                }}
+                key={story.id}
+                onClick={() => handlePlayStory(story)}
+                className="flex flex-col items-center gap-1 shrink-0 group focus:outline-none"
               >
-                {pill.label}
+                <div
+                  className={`relative p-0.5 rounded-2xl transition-all ${
+                    isPlaying
+                      ? 'ring-2 ring-red-600 ring-offset-2'
+                      : 'bg-gradient-to-tr from-red-600 via-rose-500 to-amber-500'
+                  }`}
+                >
+                  <div className="w-11 h-11 rounded-2xl overflow-hidden bg-white p-0.5 flex items-center justify-center">
+                    {persona && (
+                      <PersonaBadge
+                        persona={persona}
+                        size="sm"
+                        speakingState={isPlaying ? 'speaking' : 'idle'}
+                        className="w-full h-full"
+                      />
+                    )}
+                  </div>
+                  {isPlaying && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-red-900/30 rounded-2xl">
+                      <Play className="w-4 h-4 fill-white text-white animate-pulse" />
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-700 font-medium max-w-[62px] truncate text-center">
+                  {story.title}
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Contact List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-secondary)', padding: '4px 8px 6px' }}>
-          {lang === 'en' ? 'Tutors' : 'Tutores'} ({filteredPersonas.length})
-        </div>
+      {/* CEFR Level Filters */}
+      <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-1 bg-white">
+        {[
+          { id: 'all', label: 'Tutti' },
+          { id: 'A', label: 'A1-A2 Base' },
+          { id: 'B', label: 'B1-B2 Medio' }
+        ].map((filter) => (
+          <button
+            key={filter.id}
+            onClick={() => setLevelFilter(filter.id)}
+            className={`px-2.5 py-1 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap ${
+              levelFilter === filter.id
+                ? 'bg-red-50 text-red-700 border border-red-200 font-semibold'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-stone-50'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
 
+      {/* Contacts List */}
+      <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
         {filteredPersonas.map((persona) => {
           const isSelected = selectedPersona.id === persona.id;
+
           return (
             <div
               key={persona.id}
               onClick={() => onSelectPersona(persona)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '10px',
-                borderRadius: 12,
-                cursor: 'pointer',
-                marginBottom: 4,
-                background: isSelected ? 'var(--color-brand-red-subtle)' : 'var(--color-background-primary)',
-                border: `1px solid ${isSelected ? 'var(--color-brand-red-border)' : 'transparent'}`,
-                transition: 'background 0.15s ease'
-              }}
+              className={`p-3 transition-all cursor-pointer flex items-center gap-3 relative group ${
+                isSelected
+                  ? 'bg-red-50/70 border-l-4 border-red-600'
+                  : 'hover:bg-stone-50/80'
+              }`}
             >
-              <PersonaBadge persona={persona} size="sm" />
+              <PersonaBadge
+                persona={persona}
+                size="md"
+                speakingState={isSelected ? 'idle' : 'idle'}
+              />
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: isSelected ? 'var(--color-brand-red)' : 'var(--color-text-primary)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {persona.fullName}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="font-semibold text-xs text-slate-900 truncate">
+                      {persona.fullName}
+                    </span>
+                    <span className="text-[10px] text-red-700 bg-red-50 px-1 py-0.2 rounded font-mono font-medium">
+                      {persona.cefrLevel}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono-data shrink-0">
                     {persona.lastMessageTime}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      color: 'var(--color-brand-red)',
-                      background: 'var(--color-brand-red-soft)',
-                      padding: '1px 5px',
-                      borderRadius: 4
-                    }}
-                  >
-                    {persona.cefrLevel}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--color-text-secondary)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {persona.city} · {persona.role}
-                  </span>
+                <div className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                  <MapPin className="w-2.5 h-2.5 text-slate-400" />
+                  <span>{persona.city}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="truncate">{persona.role}</span>
                 </div>
+
+                <p className="text-[11px] text-slate-600 truncate mt-0.5">
+                  {persona.lastMessageSnippet}
+                </p>
               </div>
 
-              {/* Call shortcut button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStartCall(persona);
-                }}
-                style={{
-                  ...btn(),
-                  padding: '6px 8px',
-                  borderRadius: 10,
-                  fontSize: 11,
-                  background: 'var(--color-brand-red-subtle)',
-                  color: 'var(--color-brand-red)',
-                  border: '1px solid var(--color-brand-red-border)',
-                  flexShrink: 0
-                }}
-                title={lang === 'en' ? `Call ${persona.name}` : `Llamar a ${persona.name}`}
-              >
-                📞
-              </button>
+              {/* Direct Audio Call Button on Hover (Audio call only, NO videocall) */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartCall(persona, 'audio');
+                  }}
+                  className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors"
+                  title={`Chiama ${persona.name}`}
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           );
         })}
+
+        {filteredPersonas.length === 0 && (
+          <div className="p-8 text-center text-xs text-slate-400">
+            Nessun tutor trovato con questi filtri.
+          </div>
+        )}
       </div>
 
-      {/* Cultural Audio Story Player */}
-      <div
-        style={{
-          padding: '12px 14px',
-          borderTop: '1px solid var(--color-border-tertiary)',
-          background: 'var(--color-background-secondary)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-secondary)' }}>
-            {lang === 'en' ? 'Cultural Audio Clip' : 'Clip de audio cultural'}
-          </span>
-          <span style={{ fontSize: 10, color: 'var(--color-brand-red)', fontWeight: 600 }}>
-            {activeStory ? (lang === 'en' ? 'Playing…' : 'Reproduciendo…') : '🎧'}
-          </span>
+      {/* Sidebar Footer */}
+      <div className="p-3 border-t border-slate-100 bg-stone-50/50 text-xs">
+        <div className="text-[11px] font-medium text-slate-700 truncate">
+          &ldquo;{selectedPersona.nativeSaying}&rdquo;
         </div>
-
-        {CULTURAL_STORIES.slice(0, 1).map((story) => (
-          <div
-            key={story.id}
-            onClick={() => handlePlayStory(story)}
-            style={{
-              padding: '9px 12px',
-              borderRadius: 10,
-              background: 'var(--color-background-primary)',
-              border: '1px solid var(--color-border-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                {story.title}
-              </div>
-              <div
-                style={{
-                  fontSize: 10.5,
-                  color: 'var(--color-text-secondary)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}
-              >
-                {story.subtitle}
-              </div>
-            </div>
-
-            <span
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: 'var(--color-brand-red)',
-                color: 'var(--color-on-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 11,
-                flexShrink: 0
-              }}
-            >
-              {activeStory?.id === story.id ? '⏸' : '▶'}
-            </span>
-          </div>
-        ))}
+        <div className="text-[10px] text-slate-400 italic truncate mt-0.5">
+          {selectedPersona.nativeSayingTranslation}
+        </div>
       </div>
     </aside>
   );
