@@ -60,6 +60,85 @@ async function handleChat(req, res) {
   }
   try {
     const body = JSON.parse((await readBody(req)) || "{}");
+
+    // Check if this is a persona-based chat request from the conversational interface
+    if (body.personaPrompt) {
+      const systemInstruction = `
+${body.personaPrompt}
+Tu sei un tutor madrelingua italiano per una piattaforma di apprendimento conversazionale.
+Rigidità correzione: "${body.grammarStrictness || "tutor"}".
+Rispondi SEMPRE in italiano naturale, accogliente e culturalmente autentico.
+Includi sempre la traduzione in inglese e da 1 a 3 note grammaticali/culturali concrete (parole nuove, congiuntivo, modi di dire, pronuncia).
+
+Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura esatta:
+{
+  "text": "La tua risposta in italiano",
+  "translation": "English translation of your reply",
+  "grammarNotes": [
+    {
+      "wordOrPhrase": "parola o espressione chiave",
+      "explanation": "spiegazione in inglese chiara e sintetica",
+      "category": "verb"
+    }
+  ]
+}
+`.trim();
+
+      const contents = [];
+      if (Array.isArray(body.history)) {
+        for (const h of body.history.slice(-6)) {
+          contents.push({
+            role: h.sender === "user" ? "user" : "model",
+            parts: [{ text: String(h.text || "") }],
+          });
+        }
+      }
+      if (body.userMessage) {
+        contents.push({
+          role: "user",
+          parts: [{ text: String(body.userMessage) }],
+        });
+      }
+
+      const temperature = Math.min(Math.max(Number(body.temperature) || 0.7, 0.1), 1.2);
+
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            contents,
+            generationConfig: {
+              maxOutputTokens: 1000,
+              temperature,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+
+      /** @type {{ candidates?: { content?: { parts?: { text?: string }[] } }[] }} */
+      const data = await r.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      try {
+        const parsed = JSON.parse(raw);
+        const text = parsed.text || "...";
+        const translation = parsed.translation || "";
+        const grammarNotes = Array.isArray(parsed.grammarNotes) ? parsed.grammarNotes : [];
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ reply: text, text, translation, grammarNotes }));
+        return;
+      } catch {
+        const { reply, translation } = splitTranslation(raw);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ reply: reply || raw, text: reply || raw, translation, grammarNotes: [] }));
+        return;
+      }
+    }
+
+    // Default legacy prompt handling
     const systemPrompt = buildChatPrompt(body);
     const contents = (body.messages || []).map((m) => ({
       role: m.role === "model" ? "model" : "user",
@@ -84,10 +163,84 @@ async function handleChat(req, res) {
     // the marker never reaches the thread (docs/01-conversation-core.md).
     const { reply, translation } = splitTranslation(raw);
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ reply: reply || "...", translation }));
+    res.end(JSON.stringify({ reply: reply || "...", text: reply || "...", translation, grammarNotes: [] }));
   } catch (e) {
     console.error("chat upstream failed:", e);
     return refuse(res, 502, "upstream_failed", "(Connection error — try again!)");
+  }
+}
+
+async function handleTts(req, res) {
+  if (!GEMINI_API_KEY) {
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "GEMINI_API_KEY not configured", fallbackToBrowser: true }));
+    return;
+  }
+  try {
+    const body = JSON.parse((await readBody(req)) || "{}");
+    const { text, voiceName = "Fenrir" } = body;
+    if (!text || typeof text !== "string") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Text is required for TTS" }));
+      return;
+    }
+
+    const allowedVoices = ["Puck", "Charon", "Kore", "Fenrir", "Zephyr"];
+    let selectedVoice = voiceName;
+    if (!allowedVoices.includes(selectedVoice)) {
+      selectedVoice = voiceName.includes("Kore") ? "Kore"
+        : voiceName.includes("Puck") ? "Puck"
+        : voiceName.includes("Charon") ? "Charon"
+        : voiceName.includes("Fenrir") ? "Fenrir"
+        : "Fenrir";
+    }
+
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: text }],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: selectedVoice },
+              },
+            },
+          },
+        }),
+      }
+    );
+
+    /** @type {{ candidates?: { content?: { parts?: { inlineData?: { data?: string } }[] } }[] }} */
+    const data = await r.json();
+    const base64Audio = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+    if (!base64Audio) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "No audio generated", fallbackToBrowser: true }));
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        audioBase64: base64Audio,
+        mimeType: "audio/wav",
+        voiceUsed: selectedVoice,
+      })
+    );
+  } catch (err) {
+    console.error("TTS upstream error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "TTS generation failed", fallbackToBrowser: true }));
   }
 }
 
@@ -116,6 +269,7 @@ async function serveStatic(req, res) {
 
 createServer(async (req, res) => {
   if (req.method === "POST" && req.url === "/api/chat") return handleChat(req, res);
+  if (req.method === "POST" && req.url === "/api/tts") return handleTts(req, res);
   if (req.method === "GET" && req.url === "/api/health") { res.writeHead(200); res.end("ok"); return; }
   return serveStatic(req, res);
 }).listen(PORT, () => console.log(`corso-di-italiano listening on :${PORT}`));
