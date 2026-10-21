@@ -1,14 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { LangProvider, useLang } from "./context/LangContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { StreakProvider } from "./context/StreakContext";
+import { StreakProvider, useStreak } from "./context/StreakContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import type { Lesson } from "./curriculum/types";
 import { isForward, navFromPath, pathFor, sameNav, type NavState } from "./navigation";
-import { btn, card, onPrimary } from "./utils";
 import LangToggle from "./components/LangToggle";
 import LanguageGate from "./components/LanguageGate";
-import MainMenu from "./components/MainMenu";
 import Settings from "./components/Settings";
 import StreakBadge from "./components/StreakBadge";
 import VerbHome from "./components/VerbHome";
@@ -25,6 +23,7 @@ type Stage =
 function AppContent() {
   const { lang, chosen } = useLang();
   const { completeUnit } = useProfile();
+  const streak = useStreak();
   // Deep links land on a section; lessons cannot be reconstructed from a URL.
   const initial = useRef(navFromPath(window.location.pathname)).current;
   const [section, setSection] = useState<Section>(initial.section);
@@ -33,7 +32,6 @@ function AppContent() {
   const [backSignal, setBackSignal] = useState(0);
 
   const inLesson = section === "verbs-learning" && stage.kind === "lesson";
-  const showHomeButton = section !== "home" && !inLesson;
 
   const nav: NavState = { section, stage: stage.kind };
   const navRef = useRef(nav);
@@ -73,9 +71,9 @@ function AppContent() {
   }, []);
 
   const subtitle: Record<Section, string> = {
-    home: lang === "en" ? "Choose a section" : "Elige una sección",
+    home: lang === "en" ? "Conversational Italian" : "Italiano conversacional",
     "verbs-learning": lang === "en" ? "Verb lessons" : "Lecciones de verbos",
-    conversation: lang === "en" ? "Chat with Marco" : "Habla con Marco",
+    conversation: lang === "en" ? "Chat and calls" : "Chat y llamadas",
     settings: lang === "en" ? "Personalize the app" : "Personaliza la app",
   };
 
@@ -90,56 +88,58 @@ function AppContent() {
     });
   }, [completeUnit]);
 
-  const goHome = useCallback(() => {
+  const goToSection = useCallback((sec: Section) => {
+    setSection(sec);
     setStage({ kind: "home" });
-    setSection("home");
   }, []);
 
   const backToVerbHome = useCallback(() => setStage({ kind: "home" }), []);
 
-  return (
-    <div style={{ padding: "1rem 0", fontFamily: "var(--font-sans)" }}>
-      {!chosen && <LanguageGate />}
-
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22, padding: "14px 18px", background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-primary) 70%)", borderRadius: 14, border: "1px solid var(--color-border-tertiary)", boxShadow: "var(--shadow-sm)" }}>
-        <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 12, ...onPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, boxShadow: "var(--shadow-md)" }}>🇮🇹</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 8 }}>
-            Corso di Italiano
-            <span aria-hidden="true" style={{ display: "inline-flex", borderRadius: 3, overflow: "hidden" }}>
-              <span style={{ width: 5, height: 12, background: "var(--color-flag-green)" }} />
-              <span style={{ width: 5, height: 12, background: "var(--color-flag-white)", border: "0.5px solid var(--color-border-tertiary)" }} />
-              <span style={{ width: 5, height: 12, background: "var(--color-flag-red)" }} />
-            </span>
+  // When viewing verbs or settings: clean full-page container with top bar
+  if (section === "verbs-learning" || section === "settings") {
+    return (
+      <div className="h-screen w-screen bg-slate-100 text-slate-900 font-sans flex flex-col overflow-hidden">
+        {!chosen && <LanguageGate />}
+        <header className="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-xs z-10">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => goToSection("conversation")}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              ← {lang === "en" ? "Back to Chat" : "Volver al chat"}
+            </button>
+            <div className="h-4 w-px bg-slate-200" />
+            <span className="font-bold text-sm text-slate-900">{subtitle[section]}</span>
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>{subtitle[section]}</div>
-        </div>
-        <span style={{ flex: 1 }} />
-        <StreakBadge />
-        {showHomeButton && (
-          <button onClick={goHome} className="btn-secondary" style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}>
-            {lang === "en" ? "Menu" : "Menú"}
-          </button>
-        )}
-        <LangToggle />
+          <div className="flex items-center gap-3">
+            <StreakBadge />
+            <LangToggle />
+          </div>
+        </header>
+
+        <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 overflow-y-auto">
+          {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
+          {section === "verbs-learning" && stage.kind === "lesson" && (
+            <LessonPlayer lesson={stage.lesson} title={stage.title} backSignal={backSignal} onExit={backToVerbHome} onFinish={finishLesson} />
+          )}
+          {section === "verbs-learning" && stage.kind === "summary" && (
+            <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={backToVerbHome} />
+          )}
+          {section === "settings" && <Settings onBack={() => goToSection("conversation")} />}
+        </main>
       </div>
+    );
+  }
 
-      {/* Content */}
-      <div key={`${section}-${stage.kind}`} className="fade-in" style={card}>
-        {section === "home" && <MainMenu onSelectSection={(s) => { setSection(s); setStage({ kind: "home" }); }} />}
-
-        {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
-        {section === "verbs-learning" && stage.kind === "lesson" && (
-          <LessonPlayer lesson={stage.lesson} title={stage.title} backSignal={backSignal} onExit={backToVerbHome} onFinish={finishLesson} />
-        )}
-        {section === "verbs-learning" && stage.kind === "summary" && (
-          <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={backToVerbHome} />
-        )}
-
-        {section === "conversation" && <Conversation />}
-        {section === "settings" && <Settings onBack={goHome} />}
-      </div>
+  // Primary view: Full-screen filling conversational chat and audio calls (Italix-AI UI)
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
+      {!chosen && <LanguageGate />}
+      <Conversation
+        onNavigate={goToSection}
+        activeSection={section}
+        streakCount={streak.currentStreak}
+      />
     </div>
   );
 }

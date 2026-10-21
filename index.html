@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Corso di Italiano — learn Italian verbs</title>
+    <title>Parlami - Corso di Italiano</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
       :root {
         --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -66,6 +69,16 @@
         --color-badge-7-bg: #fce7f3; --color-badge-7-fg: #9d174d;
         --color-badge-8-bg: #ecfdf5; --color-badge-8-fg: #065f46;
 
+        --color-brand-red: #dc2626;
+        --color-brand-red-hover: #b91c1c;
+        --color-brand-red-soft: #fee2e2;
+        --color-brand-red-subtle: #fef2f2;
+        --color-brand-red-border: #fecaca;
+        --color-surface-hover: #f8fafc;
+        --color-surface-card: #ffffff;
+        --color-surface-muted: #f1f5f9;
+        --color-call-overlay: rgba(15, 23, 42, 0.65);
+
         --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
         --shadow-md: 0 4px 14px rgba(37, 99, 235, 0.12);
         --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.18);
@@ -126,6 +139,16 @@
         --color-badge-7-bg: #521030; --color-badge-7-fg: #f6b0cf;
         --color-badge-8-bg: #083b2a; --color-badge-8-fg: #86dfb8;
 
+        --color-brand-red: #ef4444;
+        --color-brand-red-hover: #f87171;
+        --color-brand-red-soft: #7f1d1d;
+        --color-brand-red-subtle: #450a0a;
+        --color-brand-red-border: #991b1b;
+        --color-surface-hover: #1e293b;
+        --color-surface-card: #1e293b;
+        --color-surface-muted: #0f172a;
+        --color-call-overlay: rgba(0, 0, 0, 0.8);
+
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
         --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
         --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.55);
@@ -149,15 +172,43 @@
         -webkit-font-smoothing: antialiased;
       }
       #root {
-        max-width: 720px;
-        margin: 0 auto;
-        /* Respect the notch and the home indicator when installed. */
-        padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
-          calc(48px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-width: 100vw;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
       }
-      @media (max-width: 480px) {
-        #root { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+      @keyframes waveBar {
+        0%, 100% { height: 6px; }
+        50% { height: 26px; }
       }
+      .animate-wave-1 { animation: waveBar 1.2s ease-in-out infinite; }
+      .animate-wave-2 { animation: waveBar 0.9s ease-in-out 0.2s infinite; }
+      .animate-wave-3 { animation: waveBar 1.4s ease-in-out 0.4s infinite; }
+      .animate-wave-4 { animation: waveBar 0.8s ease-in-out 0.1s infinite; }
+      .animate-wave-5 { animation: waveBar 1.1s ease-in-out 0.3s infinite; }
+
+      @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.15); opacity: 0.9; }
+      }
+      .animate-pulse-glow { animation: pulseGlow 2.4s ease-in-out infinite; }
+
+      @keyframes gentleFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+      }
+      .animate-float { animation: gentleFloat 3s ease-in-out infinite; }
+
+      @media (max-width: 680px) {
+        .hidden-on-mobile { display: none !important; }
+      }
+      @media (min-width: 681px) {
+        .mobile-convo-toggle { display: none !important; }
+      }
+
       .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
       .tricolore {
         height: 4px;

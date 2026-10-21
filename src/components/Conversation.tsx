@@ -1,274 +1,313 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useLang } from "../context/LangContext";
-import { useProfile } from "../context/ProfileContext";
-import { TOPICS, verbColor } from "../config";
-import { VERBS, getVerb } from "../curriculum/verbs";
-import { UNITS } from "../curriculum/path";
-import { badge, btn, formatMessage } from "../utils";
-import { useCopy } from "../copy";
-import { CONVERSATION_OPENERS, CONVERSATION_REPLIES, marcoGreeting } from "../content/italian";
+import { useState, useEffect, useMemo } from 'react';
+import { useLang } from '../context/LangContext';
+import { useCopy } from '../copy';
+import { INITIAL_PERSONAS, INITIAL_MESSAGES, generatePersonaFallbackMessage } from '../content/personas';
+import type { Persona, ChatMessage, DevSettings, CallMode } from '../types/conversation';
+import { SocialSidebar } from './conversation/SocialSidebar';
+import { ChatInterface } from './conversation/ChatInterface';
+import { PhoneCallModal } from './conversation/PhoneCallModal';
+import { DevSettingsDrawer } from './conversation/DevSettingsDrawer';
+import { PersonaProfileModal } from './conversation/PersonaProfileModal';
+import { PersonaBadge } from './conversation/PersonaBadge';
+import { speechService } from '../utils/speech';
+import { btn } from '../utils';
 
-type Msg = {
-  role: "marco" | "user";
-  text: string;
-  /** Marco's line in the learner's language, fetched with the reply and hidden until asked for. */
-  translation?: string;
-};
-const STORE = "corso-convo";
+const STORE = 'corso-convo';
 
-/**
- * Turns of history sent upstream. The full thread was previously re-sent every
- * turn, so cost grew quadratically with conversation length — untenable on a
- * free public tier (docs/01-conversation-core.md D-01-5). The window keeps
- * recent context, which is what the model actually needs.
- */
-const HISTORY_WINDOW = 20;
-
-/** Default focus verbs: those the learner has practised, else common ones. */
-function defaultFocusVerbs(completedUnits: string[]): string[] {
-  const seen = new Set<string>();
-  for (const uid of completedUnits) UNITS.find((u) => u.id === uid)?.verbIds.forEach((v) => seen.add(v));
-  const pool = seen.size >= 3 ? [...seen] : VERBS.filter((v) => v.level <= 2).map((v) => v.id);
-  return pool.slice(0, 5);
+interface SavedState {
+  messagesMap?: Record<string, ChatMessage[]>;
+  selectedPersonaId?: string;
+  started?: boolean;
+  msgs?: Array<{ role: string; text: string; translation?: string }>;
 }
 
-function loadSaved(): { msgs: Msg[]; verbs: string[]; topic: string } | null {
+function loadSaved(): SavedState | null {
   try {
     const raw = localStorage.getItem(STORE);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.messagesMap) return parsed;
+    if (Array.isArray(parsed.msgs) && parsed.msgs.length > 0) {
+      const converted: ChatMessage[] = parsed.msgs.map((m: { role: string; text: string; translation?: string }, i: number) => ({
+        id: `m-legacy-${i}`,
+        sender: m.role === 'user' ? 'user' : 'persona',
+        personaId: 'matteo',
+        text: m.text,
+        translation: m.translation || '',
+        timestamp: '09:40'
+      }));
+      return {
+        messagesMap: { matteo: converted },
+        selectedPersonaId: 'matteo',
+        started: true
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
-export default function Conversation() {
+interface ConversationProps {
+  onNavigate?: (section: 'conversation' | 'verbs-learning' | 'settings') => void;
+  activeSection?: string;
+  streakCount?: number;
+}
+
+export default function Conversation({
+  onNavigate,
+  activeSection = 'conversation',
+  streakCount = 5
+}: ConversationProps) {
   const { lang } = useLang();
   const c = useCopy();
-  const profile = useProfile();
   const saved = useMemo(loadSaved, []);
 
-  const [focusVerbs, setFocusVerbs] = useState<string[]>(saved?.verbs ?? defaultFocusVerbs(profile.completedUnits));
-  const [topic, setTopic] = useState<string>(saved?.topic ?? profile.topics[0] ?? "");
-  const [editVerbs, setEditVerbs] = useState(false);
-  const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [shownTranslations, setShownTranslations] = useState<Set<number>>(new Set());
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [personas] = useState<Persona[]>(INITIAL_PERSONAS);
+  const [selectedPersona, setSelectedPersona] = useState<Persona>(() => {
+    const found = personas.find((p) => p.id === saved?.selectedPersonaId);
+    return found || personas[0];
+  });
 
-  const toggleTranslation = (index: number) =>
-    setShownTranslations((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
+  const [messagesMap, setMessagesMap] = useState<Record<string, ChatMessage[]>>(
+    saved?.messagesMap || INITIAL_MESSAGES
+  );
+  const [started, setStarted] = useState<boolean>(true);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
 
-  const started = msgs.length > 0;
+  // Active call state (audio only, no videocall)
+  const [activeCall, setActiveCall] = useState<{
+    persona: Persona;
+    mode: CallMode;
+  } | null>(null);
+
+  // Modals & drawers
+  const [isDevLabOpen, setIsDevLabOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
 
   useEffect(() => {
-    localStorage.setItem(STORE, JSON.stringify({ msgs, verbs: focusVerbs, topic }));
-  }, [msgs, focusVerbs, topic]);
-
-  // Follow the bottom of the thread. Revealing a translation makes a message
-  // taller, so it has to scroll too or the text it just revealed sits clipped
-  // below the fold — which defeats the point of asking for it.
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs, shownTranslations]);
-
-  const greeting = (): string => {
-    const list = focusVerbs.map((v) => getVerb(v)?.infinitive).filter(Boolean).join(", ");
-    return marcoGreeting(list, profile.name);
-  };
-
-  const send = async (text: string) => {
-    const clean = text.trim();
-    if (!clean || loading) return;
-    const history: Msg[] = [
-      ...(msgs.length ? msgs : [{ role: "marco" as const, text: greeting() }]),
-      { role: "user" as const, text: clean },
-    ];
-    setMsgs(history);
-    setInput("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uiLang: lang,
-          verbs: focusVerbs.map((v) => getVerb(v)?.infinitive ?? v),
-          topic: TOPICS.find((t) => t.id === topic)?.it ?? "",
-          name: profile.name,
-          weakVerbs: [...new Set(profile.weakKeys().map((k) => k.split(":")[0]))].map((id) => getVerb(id)?.infinitive ?? id).slice(0, 6),
-          messages: history
-            .slice(-HISTORY_WINDOW)
-            .map((m) => ({ role: m.role === "marco" ? "model" : "user", text: m.text })),
-        }),
-      });
-      const data = await res.json();
-      // Server errors arrive as a code, not as prose: interface text is always
-      // rendered in the learner's language (see docs/04-interface-language.md).
-      const text =
-        data.error === "rate_limited"
-          ? c("state.rateLimited")
-          : data.error
-            ? c("state.serverUnavailable")
-            : data.reply || "...";
-      // A failed turn has no translation to offer; the message is already in
-      // the learner's language.
-      setMsgs((m) => [...m, { role: "marco", text, translation: data.error ? "" : data.translation ?? "" }]);
-    } catch {
-      setMsgs((m) => [...m, { role: "marco", text: c("state.connectionError") }]);
+    if (window.location.pathname === '/conversation') {
+      setMobileView('chat');
     }
-    setLoading(false);
+  }, []);
+
+  // Dev Settings for AI Models and Voice Lab
+  const [devSettings, setDevSettings] = useState<DevSettings>({
+    voiceProvider: 'gemini_live',
+    voiceId: 'Fenrir',
+    temperature: 0.7,
+    speechRate: 0.95,
+    audioSamplingRate: '24kHz',
+    latencyMode: 'turbo',
+    grammarStrictness: 'tutor',
+    regionalSlangLevel: 'subtle',
+    subtitlesEnabled: true,
+    autoPlayAudio: false,
+    customSystemPrompt: '',
+    apiMockLatencyMs: 200
+  });
+
+  const activeMessages = messagesMap[selectedPersona.id] || [];
+
+  // Persist conversation state to localStorage
+  useEffect(() => {
+    const currentList = messagesMap[selectedPersona.id] || [];
+    localStorage.setItem(
+      STORE,
+      JSON.stringify({
+        messagesMap,
+        selectedPersonaId: selectedPersona.id,
+        started: true,
+        // Backwards compatibility for tests expecting msgs array
+        msgs: currentList.map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'marco',
+          text: m.text,
+          translation: m.translation
+        }))
+      })
+    );
+  }, [messagesMap, selectedPersona.id]);
+
+  const handleSendMessage = async (text: string) => {
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      sender: 'user',
+      personaId: selectedPersona.id,
+      text,
+      translation: '',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const updated = [...activeMessages, userMsg];
+    setMessagesMap((prev) => ({
+      ...prev,
+      [selectedPersona.id]: updated
+    }));
+
+    setIsAiGenerating(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personaPrompt: selectedPersona.personaPrompt,
+          history: updated.slice(-6),
+          userMessage: text,
+          temperature: devSettings.temperature,
+          grammarStrictness: devSettings.grammarStrictness
+        })
+      });
+
+      if (res.status === 429) {
+        const errorMsg: ChatMessage = {
+          id: `b-err-${Date.now()}`,
+          sender: 'persona',
+          personaId: selectedPersona.id,
+          text: c('state.rateLimited'),
+          translation: '',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessagesMap((prev) => ({
+          ...prev,
+          [selectedPersona.id]: [...(prev[selectedPersona.id] || []), errorMsg]
+        }));
+        setIsAiGenerating(false);
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        const replyText = data.text || data.reply;
+        if (replyText) {
+          const aiMessage: ChatMessage = {
+            id: `b-${Date.now()}`,
+            sender: 'persona',
+            personaId: selectedPersona.id,
+            text: replyText,
+            translation: data.translation || '',
+            grammarNotes: Array.isArray(data.grammarNotes) ? data.grammarNotes : [],
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+
+          setMessagesMap((prev) => ({
+            ...prev,
+            [selectedPersona.id]: [...(prev[selectedPersona.id] || []), aiMessage]
+          }));
+
+          if (devSettings.autoPlayAudio) {
+            speechService.speakSmart(aiMessage.text, {
+              provider: devSettings.voiceProvider,
+              voiceName: selectedPersona.voiceId,
+              gender: selectedPersona.voiceGender
+            });
+          }
+
+          setIsAiGenerating(false);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+
+    // Fallback generator when offline or server unreachable
+    setTimeout(() => {
+      const fallback = generatePersonaFallbackMessage(selectedPersona, text);
+      setMessagesMap((prev) => ({
+        ...prev,
+        [selectedPersona.id]: [...(prev[selectedPersona.id] || []), fallback]
+      }));
+
+      if (devSettings.autoPlayAudio) {
+        speechService.speakSmart(fallback.text, {
+          provider: devSettings.voiceProvider,
+          voiceName: selectedPersona.voiceId,
+          gender: selectedPersona.voiceGender
+        });
+      }
+
+      setIsAiGenerating(false);
+    }, 400);
   };
 
-  const start = () => { setMsgs([{ role: "marco", text: greeting() }]); };
-  const restart = () => {
-    setMsgs([]);
-    setShownTranslations(new Set());
-    localStorage.removeItem(STORE);
+  const handleStartCall = (persona: Persona) => {
+    setSelectedPersona(persona);
+    setActiveCall({ persona, mode: 'audio' });
   };
 
-  const toggleFocus = (id: string) =>
-    setFocusVerbs((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 6 ? [...p, id] : p));
+  const handleEndCall = () => {
+    setActiveCall(null);
+  };
 
-  const suggestions: string[] = started ? CONVERSATION_REPLIES : CONVERSATION_OPENERS;
+  const handleSelectPersona = (persona: Persona) => {
+    setSelectedPersona(persona);
+    setMobileView('chat');
+  };
 
+  // Full-Screen Conversational Chat and Calling Interface (matching Italix-AI)
   return (
-    <div>
-      {/* Focus verbs + topic */}
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--color-text-secondary)" }}>
-            {lang === "en" ? "Focus verbs:" : "Verbos objetivo:"}
-          </span>
-          {focusVerbs.map((v) => {
-            const c = verbColor(v);
-            return <span key={v} style={{ ...badge(c), padding: "2px 10px", fontSize: 12 }}>{getVerb(v)?.infinitive}</span>;
-          })}
-          <button onClick={() => setEditVerbs((e) => !e)} className="btn-ghost" style={{ ...btn(), padding: "3px 10px", fontSize: 12 }}>
-            {editVerbs ? (lang === "en" ? "Done" : "Listo") : (lang === "en" ? "Change" : "Cambiar")}
-          </button>
-        </div>
-        {editVerbs && (
-          <div className="fade-in" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-            {VERBS.map((v) => (
-              <button key={v.id} onClick={() => toggleFocus(v.id)} style={{ ...btn(focusVerbs.includes(v.id)), padding: "5px 10px", fontSize: 12, fontWeight: 600 }}>
-                {v.infinitive}
-              </button>
-            ))}
-          </div>
-        )}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--color-text-secondary)", alignSelf: "center" }}>
-            {lang === "en" ? "Topic:" : "Tema:"}
-          </span>
-          {TOPICS.map((t) => (
-            <button key={t.id} onClick={() => setTopic(t.id === topic ? "" : t.id)} style={{ ...btn(topic === t.id), padding: "4px 10px", fontSize: 12, fontWeight: 600 }}>
-              {t.emoji} {lang === "en" ? t.en : t.es}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
+      {/* Left Column: Social Contacts & Stories Sidebar */}
+      <SocialSidebar
+        personas={personas}
+        selectedPersona={selectedPersona}
+        onSelectPersona={handleSelectPersona}
+        onStartCall={(p) => handleStartCall(p)}
+        onOpenDevLab={() => setIsDevLabOpen(true)}
+        onNavigate={(target) => {
+          if (target === 'conversation') {
+            setMobileView('chat');
+          }
+          onNavigate?.(target);
+        }}
+        activeSection={activeSection}
+        streakCount={streakCount}
+        className={mobileView === 'chat' ? 'hidden lg:flex' : 'flex'}
+      />
 
-      {!started ? (
-        <div style={{ textAlign: "center", padding: "28px 16px" }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }} aria-hidden="true">💬</div>
-          <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>
-            {lang === "en" ? "Talk with Marco" : "Habla con Marco"}
-          </div>
-          <p style={{ fontSize: 13.5, color: "var(--color-text-secondary)", lineHeight: 1.6, maxWidth: 420, margin: "0 auto 18px" }}>
-            {lang === "en"
-              ? "A relaxed chat with a patient Italian friend. He steers the conversation toward your focus verbs and corrects only what matters."
-              : "Una charla relajada con un amigo italiano paciente. Lleva la conversación hacia tus verbos objetivo y corrige solo lo importante."}
-          </p>
-          <button onClick={start} className="btn-primary" style={{ ...btn(), padding: "13px 28px", fontWeight: 600, fontSize: 15 }}>
-            {lang === "en" ? "Start chatting →" : "Empezar a charlar →"}
-          </button>
-        </div>
-      ) : (
-        <>
-          <div ref={scrollRef} style={{ minHeight: 220, maxHeight: 380, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, marginBottom: 12, padding: "4px 0" }}>
-            {msgs.map((m, i) => {
-              // Only Marco's Italian needs translating: the learner wrote their
-              // own messages, so translating those teaches nothing.
-              const canTranslate = m.role === "marco" && m.translation !== undefined;
-              const shown = shownTranslations.has(i);
-              return (
-                <div key={i} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "85%" }}>
-                  <div style={{
-                    padding: "10px 14px", borderRadius: 14, fontSize: 14, lineHeight: 1.55,
-                    background: m.role === "user" ? "var(--color-primary)" : "var(--color-background-secondary)",
-                    color: m.role === "user" ? "var(--color-on-primary)" : "var(--color-text-primary)",
-                    border: m.role === "user" ? "none" : "1px solid var(--color-border-tertiary)",
-                  }}>
-                    {m.role === "marco" ? formatMessage(m.text) : m.text}
-                  </div>
-                  {canTranslate && (
-                    <button
-                      onClick={() => toggleTranslation(i)}
-                      className="btn-ghost"
-                      aria-expanded={shown}
-                      style={{
-                        ...btn(), padding: "2px 8px", marginTop: 4, fontSize: 11.5,
-                        fontWeight: 600, color: "var(--color-text-secondary)", border: "none",
-                        background: "transparent",
-                      }}
-                    >
-                      {shown ? c("chat.hideTranslation") : c("chat.translate")}
-                    </button>
-                  )}
-                  {canTranslate && shown && (
-                    <div className="fade-in" style={{
-                      marginTop: 2, padding: "8px 12px", borderRadius: 10, fontSize: 13,
-                      lineHeight: 1.55, fontStyle: m.translation ? "normal" : "italic",
-                      background: "var(--color-background-tint)",
-                      color: "var(--color-text-secondary)",
-                      border: "1px solid var(--color-border-tertiary)",
-                    }}>
-                      {m.translation || c("chat.translationUnavailable")}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {loading && (
-              <div style={{ alignSelf: "flex-start", fontSize: 13, color: "var(--color-text-secondary)", fontStyle: "italic", padding: "6px 10px" }}>
-                Marco {lang === "en" ? "is typing…" : "está escribiendo…"}
-              </div>
-            )}
-          </div>
+      {/* Center/Right Column: Chat Interface */}
+      <ChatInterface
+        persona={selectedPersona}
+        messages={activeMessages}
+        devSettings={devSettings}
+        onSendMessage={handleSendMessage}
+        onStartCall={() => handleStartCall(selectedPersona)}
+        onOpenPersonaDetails={() => setIsProfileModalOpen(true)}
+        onOpenDevLab={() => setIsDevLabOpen(true)}
+        onStartChatting={() => setStarted(true)}
+        onBackToSidebar={() => setMobileView('sidebar')}
+        isAiGenerating={isAiGenerating}
+        className={mobileView === 'sidebar' ? 'hidden lg:flex' : 'flex'}
+      />
 
-          {/* Quick-reply suggestions */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-            {suggestions.map((s) => (
-              <button key={s} onClick={() => (s.endsWith("...?") ? setInput(s.replace("...?", " ")) : send(s))} disabled={loading} className="btn-ghost" style={{ ...btn(), padding: "5px 11px", fontSize: 12.5 }}>
-                {s}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") send(input); }}
-              placeholder={lang === "en" ? "Write in Italian…" : "Escribe en italiano…"}
-              style={{ flex: 1, padding: "12px 14px", fontSize: 15, borderRadius: 12, border: "1px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)" }}
-            />
-            <button onClick={() => send(input)} disabled={loading || !input.trim()} className="btn-primary" style={{ ...btn(), padding: "12px 20px", fontWeight: 600 }}>
-              {lang === "en" ? "Send" : "Enviar"}
-            </button>
-          </div>
-          <div style={{ marginTop: 10, textAlign: "right" }}>
-            <button onClick={restart} className="btn-ghost" style={{ ...btn(), padding: "5px 11px", fontSize: 12 }}>
-              ↺ {lang === "en" ? "New conversation" : "Nueva conversación"}
-            </button>
-          </div>
-        </>
+      {/* Full-Screen Phone Call Interface (Audio Call, NO videocall) */}
+      {activeCall && (
+        <PhoneCallModal
+          persona={activeCall.persona}
+          devSettings={devSettings}
+          onEndCall={handleEndCall}
+          onOpenDevSettings={() => setIsDevLabOpen(true)}
+        />
       )}
+
+      {/* AI Lab & Voice Models Drawer */}
+      <DevSettingsDrawer
+        isOpen={isDevLabOpen}
+        onClose={() => setIsDevLabOpen(false)}
+        settings={devSettings}
+        onSaveSettings={(updated) => setDevSettings(updated)}
+        activePersonaName={selectedPersona.fullName}
+      />
+
+      {/* Persona Cultural Details Modal */}
+      <PersonaProfileModal
+        persona={selectedPersona}
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onStartCall={() => handleStartCall(selectedPersona)}
+      />
     </div>
   );
 }
