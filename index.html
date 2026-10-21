@@ -200,6 +200,13 @@
       }
       .animate-float { animation: gentleFloat 3s ease-in-out infinite; }
 
+      @media (max-width: 680px) {
+        .hidden-on-mobile { display: none !important; }
+      }
+      @media (min-width: 681px) {
+        .mobile-convo-toggle { display: none !important; }
+      }
+
       .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
       .tricolore {
         height: 4px;

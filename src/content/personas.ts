@@ -57,43 +57,18 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       id: 'm1',
       sender: 'persona',
       personaId: 'matteo',
-      text: 'Ciao! Benvenuto al mio bar qui a Firenze! ☕ Come stai oggi?',
-      translation: 'Hello! Welcome to my coffee shop here in Florence! How are you doing today?',
+      text: 'Ciao! Benvenuto al mio bar qui a Firenze! ☕ Di cosa vuoi parlare oggi?',
+      translation: 'Hello! Welcome to my coffee shop here in Florence! What would you like to talk about today?',
       grammarNotes: [
         {
           wordOrPhrase: 'Benvenuto',
           explanation: 'Welcome (masculine singular). If speaking to a female, Italians say "Benvenuta".',
           category: 'grammar'
-        },
-        {
-          wordOrPhrase: 'Come stai',
-          explanation: 'Informal "How are you?" (from the verb stare - to be/stay).',
-          category: 'verb'
         }
       ],
       audioDuration: '0:04',
       timestamp: '09:40',
       isVoiceNote: true
-    },
-    {
-      id: 'm2',
-      sender: 'persona',
-      personaId: 'matteo',
-      text: 'Se vuoi ordinare, puoi dire semplicemente: "Un caffè espresso per favore, grazie!". Ti va di provare?',
-      translation: 'If you want to order, you can simply say: "An espresso coffee please, thank you!". Would you like to try?',
-      grammarNotes: [
-        {
-          wordOrPhrase: 'per favore',
-          explanation: 'Classic courteous phrase for "please". You can also hear "per piacere".',
-          category: 'vocabulary'
-        },
-        {
-          wordOrPhrase: 'Ti va di provare?',
-          explanation: 'Idiomatic expression meaning "Do you feel like trying?" (andare a qualcuno + infinitive).',
-          category: 'idiom'
-        }
-      ],
-      timestamp: '09:42'
     }
   ],
   sofia: [
@@ -118,26 +93,6 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       audioDuration: '0:06',
       timestamp: '11:10',
       isVoiceNote: true
-    },
-    {
-      id: 's2',
-      sender: 'persona',
-      personaId: 'sofia',
-      text: 'Hai mai visitato Roma o stai programmando un viaggio in Italia?',
-      translation: 'Have you ever visited Rome or are you planning a trip to Italy?',
-      grammarNotes: [
-        {
-          wordOrPhrase: 'Hai mai visitato',
-          explanation: 'Passato prossimo tense with "mai" (ever). Formed with auxiliary avere + past participle.',
-          category: 'grammar'
-        },
-        {
-          wordOrPhrase: 'stai programmando',
-          explanation: 'Present progressive tense: stare + gerund (-ando/-endo). Meaning "are you planning".',
-          category: 'verb'
-        }
-      ],
-      timestamp: '11:15'
     }
   ]
 };
@@ -167,6 +122,13 @@ export const ITALIAN_PRACTICE_PHRASES = [
   { it: 'Scusa, sai a che ora chiudono i musei oggi?', en: 'Excuse me, do you know what time the museums close today?' },
   { it: "Puoi parlare un po' più lentamente? Sto imparando!", en: 'Can you speak a little slower? I am learning!' },
   { it: 'Come si dice questa parola in italiano corretto?', en: 'How do you say this word in proper Italian?' }
+];
+
+export const SUGGESTED_STARTERS = [
+  'Come si ordina al bar?',
+  'Raccontami della tua città',
+  'Correggi la mia frase',
+  'Che cosa consigli di tipico?'
 ];
 
 export function generatePersonaFallbackMessage(persona: Persona, userText: string): ChatMessage {
