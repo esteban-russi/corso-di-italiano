@@ -34,6 +34,15 @@ export const LAB_SAMPLE_TTS = "Buongiorno! Vorrei un caffè espresso e un cornet
 /** Testing app passage for barge-in interruption tests */
 export const LAB_BARGE_IN_PASSAGE = "Oggi a Roma è una giornata meravigliosa di sole. Ho fatto una passeggiata vicino al Colosseo e poi mi sono fermato per mangiare un piatto di pasta fresca. Tu cosa hai fatto di bello?";
 
+/** Daily featured prompt quote displayed on the Talk home hub */
+export const FEATURED_DAILY_PROMPT = {
+  italian: "“Ciao! Com'è andata la giornata?”",
+  translation: {
+    en: "“Hi! How was your day?”",
+    es: "“¡Hola! ¿Cómo te ha ido el día?”",
+  },
+};
+
 /** Simulated mock reply for offline benchmarking */
 export function mockItalianReply(charName: string, city: string): string {
   return `Ti ho capito benissimo! [${charName} - ${city}] Risposta di prova generata con successo dal provider mock.`;

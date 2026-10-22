@@ -309,7 +309,7 @@ export default function Conversation() {
                   gap: 5,
                   padding: "4px 10px",
                   fontSize: 12,
-                  borderRadius: 20,
+                  borderRadius: 6,
                 }}
               >
                 <span>{char.avatarEmoji}</span>
@@ -441,21 +441,23 @@ export default function Conversation() {
               const shown = shownTranslations.has(i);
 
               return (
-                <div key={i} style={{ alignSelf: isUser ? "flex-end" : "flex-start", maxWidth: "85%" }}>
+                <div key={i} style={{ alignSelf: isUser ? "flex-end" : "flex-start", maxWidth: "88%" }}>
                   <div
                     style={{
                       padding: "10px 14px",
-                      borderRadius: 14,
+                      borderRadius: isUser ? 6 : 4,
                       fontSize: 14,
                       lineHeight: 1.55,
-                      background: isUser ? "var(--color-primary)" : "var(--color-background-secondary)",
+                      background: isUser ? "var(--color-primary)" : "var(--color-background-primary)",
                       color: isUser ? "var(--color-on-primary)" : "var(--color-text-primary)",
-                      border: isUser ? "none" : "1px solid var(--color-border-tertiary)",
+                      border: isUser ? "none" : "1px solid var(--color-border-secondary)",
+                      borderLeft: isUser ? "none" : "3px solid var(--color-primary)",
+                      boxShadow: "var(--shadow-sm)",
                     }}
                   >
                     {!isUser && (
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-text-secondary)", marginBottom: 4 }}>
-                        {msgChar.avatarEmoji} {msgChar.name}
+                      <div style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--font-serif)", color: "var(--color-primary-text)", marginBottom: 4 }}>
+                        {msgChar.name} · {msgChar.city}
                       </div>
                     )}
                     {isUser ? m.text : formatMessage(m.text)}
@@ -562,7 +564,7 @@ export default function Conversation() {
                 flex: 1,
                 padding: "12px 14px",
                 fontSize: 15,
-                borderRadius: 12,
+                borderRadius: 6,
                 border: `1px solid ${isRecording ? "var(--color-danger)" : "var(--color-border-secondary)"}`,
                 background: "var(--color-background-primary)",
                 color: "var(--color-text-primary)",
@@ -576,8 +578,10 @@ export default function Conversation() {
               title={c("chat.micStart")}
               style={{
                 ...btn(isRecording),
-                padding: "12px 14px",
+                borderRadius: 6,
+                padding: "12px 16px",
                 borderColor: isRecording ? "var(--color-danger)" : undefined,
+                background: isRecording ? "var(--color-danger-soft)" : undefined,
               }}
             >
               {isRecording ? "🔴" : "🎙️"}

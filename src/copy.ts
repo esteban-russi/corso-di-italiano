@@ -259,6 +259,18 @@ export const COPY = {
   },
 
   // --- Navigation & Header --------------------------------------------------
+  "nav.talk": {
+    en: "Talk",
+    es: "Habla",
+  },
+  "nav.learn": {
+    en: "Learn",
+    es: "Aprende",
+  },
+  "nav.you": {
+    en: "You",
+    es: "Tú",
+  },
   "nav.home": {
     en: "Home",
     es: "Inicio",
@@ -278,6 +290,40 @@ export const COPY = {
   "nav.settings": {
     en: "Settings",
     es: "Ajustes",
+  },
+
+  // --- Home Hub (Editorial Italian / Pattern C) ----------------------------
+  "home.kicker": {
+    en: "Today's conversation",
+    es: "Conversación de hoy",
+  },
+  "home.reply": {
+    en: "Reply to Marco",
+    es: "Responder a Marco",
+  },
+  "home.replyTo": {
+    en: "Reply to {name}",
+    es: "Responder a {name}",
+  },
+  "home.practiceHeader": {
+    en: "Practise from your chats",
+    es: "Practica con tus conversaciones",
+  },
+  "home.today": {
+    en: "Today",
+    es: "Hoy",
+  },
+  "home.goalProgress": {
+    en: "{count} of {goal} completed",
+    es: "{count} de {goal} completadas",
+  },
+  "home.showTranslation": {
+    en: "Show translation",
+    es: "Mostrar traducción",
+  },
+  "home.hideTranslation": {
+    en: "Hide translation",
+    es: "Ocultar traducción",
   },
 
   // --- Audio & Experimentation Lab (Plan 000 & Plan 02) ---------------------

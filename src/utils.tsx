@@ -6,23 +6,24 @@ import React from "react";
 /* ------------------------------------------------------------------ */
 export const btn = (active = false): React.CSSProperties => ({
   padding: "9px 18px",
-  borderRadius: 10,
+  borderRadius: 6,
   border: `1px solid ${active ? "var(--color-primary)" : "var(--color-border-secondary)"}`,
   background: active
     ? "var(--color-primary-softer)"
     : "var(--color-background-primary)",
   cursor: "pointer",
-  fontWeight: 500,
+  fontWeight: 600,
   fontSize: 14,
-  color: active ? "var(--color-primary-hover)" : "var(--color-text-primary)",
+  fontFamily: "var(--font-sans)",
+  color: active ? "var(--color-primary-text)" : "var(--color-text-primary)",
+  transition: "all 0.15s ease",
 });
 
 export const card: React.CSSProperties = {
   background: "var(--color-background-primary)",
-  border: "1px solid var(--color-border-tertiary)",
-  borderTop: "3px solid var(--color-primary)",
-  borderRadius: 14,
-  padding: "22px 22px",
+  border: "1px solid var(--color-border-secondary)",
+  borderRadius: 8,
+  padding: "24px 22px",
   boxShadow: "var(--shadow-sm)",
 };
 
@@ -30,10 +31,10 @@ export const row: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 12,
-  padding: "10px 14px",
+  padding: "12px 16px",
   background: "var(--color-background-secondary)",
-  borderRadius: 10,
-  border: "1px solid var(--color-border-tertiary)",
+  borderRadius: 6,
+  border: "1px solid var(--color-border-secondary)",
 };
 
 /**
@@ -58,20 +59,24 @@ export const scrim = (blur = 3): React.CSSProperties => ({
 });
 
 /** Centred dialog panel that sits inside a `scrim`. */
-export const modalPanel = (radius = 16): React.CSSProperties => ({
+export const modalPanel = (radius = 8): React.CSSProperties => ({
   background: "var(--color-background-primary)",
   borderRadius: radius,
   textAlign: "center",
   boxShadow: "var(--shadow-lg)",
-  border: "1px solid var(--color-border-tertiary)",
+  border: "1px solid var(--color-border-secondary)",
 });
 
 /** Small categorical chip, coloured by `verbColor` (see config.ts). */
 export const badge = (tone: { bg: string; color: string }): React.CSSProperties => ({
   background: tone.bg,
   color: tone.color,
-  borderRadius: 999,
+  borderRadius: 4,
+  padding: "2px 8px",
   fontWeight: 600,
+  fontSize: 12,
+  display: "inline-flex",
+  alignItems: "center",
 });
 
 export const sub: React.CSSProperties = {

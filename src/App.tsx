@@ -5,7 +5,8 @@ import { StreakProvider } from "./context/StreakContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import type { Lesson } from "./curriculum/types";
 import { isForward, navFromPath, pathFor, sameNav, type NavState } from "./navigation";
-import { btn, card, onPrimary } from "./utils";
+import { btn, card } from "./utils";
+import { useCopy } from "./copy";
 import LangToggle from "./components/LangToggle";
 import LanguageGate from "./components/LanguageGate";
 import MainMenu from "./components/MainMenu";
@@ -99,36 +100,72 @@ function AppContent() {
 
   const backToVerbHome = useCallback(() => setStage({ kind: "home" }), []);
 
+  const c = useCopy();
+
   return (
-    <div style={{ padding: "1rem 0", fontFamily: "var(--font-sans)" }}>
+    <div style={{ padding: "0.5rem 0", fontFamily: "var(--font-sans)" }}>
       {!chosen && <LanguageGate />}
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22, padding: "14px 18px", background: "linear-gradient(135deg, var(--color-primary-softer), var(--color-background-primary) 70%)", borderRadius: 14, border: "1px solid var(--color-border-tertiary)", boxShadow: "var(--shadow-sm)" }}>
-        <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 12, ...onPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, boxShadow: "var(--shadow-md)" }}>🇮🇹</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 8 }}>
-            Corso di Italiano
-            <span aria-hidden="true" style={{ display: "inline-flex", borderRadius: 3, overflow: "hidden" }}>
-              <span style={{ width: 5, height: 12, background: "var(--color-flag-green)" }} />
-              <span style={{ width: 5, height: 12, background: "var(--color-flag-white)", border: "0.5px solid var(--color-border-tertiary)" }} />
-              <span style={{ width: 5, height: 12, background: "var(--color-flag-red)" }} />
+      {/* Editorial Italian Header */}
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 18,
+          padding: "12px 16px",
+          background: "var(--color-background-primary)",
+          borderRadius: 8,
+          border: "1px solid var(--color-border-secondary)",
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 24,
+                fontWeight: 700,
+                color: "var(--color-text-primary)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Corso
             </span>
+            <span style={{ color: "var(--color-primary-text)", fontSize: 24, fontWeight: 700 }}>·</span>
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--color-text-secondary)", marginTop: 2 }}>{subtitle[section]}</div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "var(--color-text-secondary)",
+              marginTop: 1,
+            }}
+          >
+            {subtitle[section]}
+          </div>
         </div>
-        <span style={{ flex: 1 }} />
-        <StreakBadge />
-        {showHomeButton && (
-          <button onClick={goHome} className="btn-secondary" style={{ ...btn(), padding: "7px 12px", fontSize: 12.5, fontWeight: 600 }}>
-            {lang === "en" ? "Menu" : "Menú"}
-          </button>
-        )}
-        <LangToggle />
-      </div>
 
-      {/* Content */}
-      <div key={`${section}-${stage.kind}`} className="fade-in" style={card}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <StreakBadge />
+          {showHomeButton && (
+            <button
+              onClick={goHome}
+              className="btn-secondary"
+              style={{ ...btn(), padding: "6px 12px", fontSize: 12.5, fontWeight: 600 }}
+            >
+              {lang === "en" ? "Menu" : "Menú"}
+            </button>
+          )}
+          <LangToggle />
+        </div>
+      </header>
+
+      {/* Main Content View */}
+      <main key={`${section}-${stage.kind}`} className="fade-in" style={card}>
         {section === "home" && <MainMenu onSelectSection={(s) => { setSection(s); setStage({ kind: "home" }); }} />}
 
         {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
@@ -142,7 +179,76 @@ function AppContent() {
         {section === "conversation" && <Conversation />}
         {section === "lab" && <ExperimentLab />}
         {section === "settings" && <Settings onBack={goHome} />}
-      </div>
+      </main>
+
+      {/* Pattern C Mobile Bottom Navigation Bar */}
+      {!inLesson && (
+        <nav
+          aria-label="Main Navigation"
+          style={{
+            position: "sticky",
+            bottom: 8,
+            marginTop: 20,
+            padding: "8px 12px calc(8px + env(safe-area-inset-bottom))",
+            background: "var(--color-background-primary)",
+            border: "1px solid var(--color-border-secondary)",
+            borderRadius: 8,
+            boxShadow: "var(--shadow-md)",
+            display: "flex",
+            justifyContent: "space-around",
+            alignItems: "center",
+            zIndex: 40,
+          }}
+        >
+          {[
+            { id: "home", label: c("nav.talk"), icon: "💬" },
+            { id: "verbs-learning", label: c("nav.learn"), icon: "📚" },
+            { id: "lab", label: c("nav.lab"), icon: "🧪" },
+            { id: "settings", label: c("nav.you"), icon: "⚙️" },
+          ].map((tab) => {
+            const active = section === tab.id || (tab.id === "home" && section === "conversation");
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setSection(tab.id as Section);
+                  setStage({ kind: "home" });
+                }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: "4px 14px",
+                  color: active ? "var(--color-primary-text)" : "var(--color-text-secondary)",
+                  fontWeight: active ? 700 : 500,
+                  fontSize: 11.5,
+                  fontFamily: "var(--font-sans)",
+                  position: "relative",
+                }}
+              >
+                <span style={{ fontSize: 18 }}>{tab.icon}</span>
+                <span>{tab.label}</span>
+                {active && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: -2,
+                      width: 18,
+                      height: 2,
+                      borderRadius: 1,
+                      background: "var(--color-primary)",
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
