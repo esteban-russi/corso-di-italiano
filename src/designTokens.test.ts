@@ -88,9 +88,11 @@ describe("token layer", () => {
   it("declares the light and dark palettes symmetrically", () => {
     const light = tokensIn(":root");
     const dark = tokensIn('[data-theme="dark"]');
-    // --font-sans is intentionally light-only; everything else must be paired,
-    // or a theme switch will silently inherit the wrong value.
-    const lightOnly = [...light].filter((t) => !dark.has(t) && t !== "--font-sans");
+    // Only theme-dependent tokens (colours, shadows) must be paired, or a theme
+    // switch silently inherits the wrong value. Type, spacing and radius tokens
+    // are theme-invariant and live in :root alone.
+    const themed = (t: string) => /^--(color|shadow)-/.test(t);
+    const lightOnly = [...light].filter((t) => themed(t) && !dark.has(t));
     const darkOnly = [...dark].filter((t) => !light.has(t));
     expect({ lightOnly, darkOnly }).toEqual({ lightOnly: [], darkOnly: [] });
   });
