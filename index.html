@@ -3,48 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Parlami - Corso di Italiano</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>Corso di Italiano — learn Italian verbs</title>
     <style>
+      @font-face {
+        font-family: "DM Serif Display";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "DM Serif Display";
+        font-style: italic;
+        font-weight: 400;
+        font-display: swap;
+        src: url("/fonts/dm-serif-display-italic-latin.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Work Sans";
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url("/fonts/work-sans-var-latin.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+
       :root {
-        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        --color-text-primary: #0f172a;
-        --color-text-secondary: #64748b;
-        --color-background-primary: #ffffff;
-        --color-background-secondary: #f1f6fb;
-        --color-background-tint: #eff6ff;
-        --color-border-primary: #c7d2e0;
-        --color-border-secondary: #dbe4ee;
-        --color-border-tertiary: #e8eef5;
+        --font-serif: "DM Serif Display", Georgia, serif;
+        --font-sans: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        --color-text-primary: #1c1a17;
+        --color-text-secondary: #686157;
+        --color-background-primary: #fbf8f2;
+        --color-background-secondary: #f3eee4;
+        --color-background-tint: #ebe3d5;
+        --color-border-primary: #d6cdbd;
+        --color-border-secondary: #e2dbcd;
+        --color-border-tertiary: #ebe4d7;
 
-        --color-primary: #2563eb;
-        --color-primary-hover: #1d4ed8;
-        --color-primary-active: #1e40af;
-        --color-primary-soft: #dbeafe;
-        --color-primary-softer: #eff6ff;
-        --color-primary-ring: rgba(37, 99, 235, 0.35);
+        --color-primary: #b8202a;
+        --color-primary-text: #b8202a;
+        --color-primary-hover: #9e1a23;
+        --color-primary-active: #84141c;
+        --color-primary-soft: #fae6e7;
+        --color-primary-softer: #fdf4f4;
+        --color-primary-ring: rgba(184, 32, 42, 0.35);
 
-        --color-success: #059669;
-        --color-success-soft: #d1fae5;
-        --color-danger: #dc2626;
-        --color-danger-hover: #b91c1c;
-        --color-danger-soft: #fee2e2;
+        --color-success: #255c34;
+        --color-success-soft: #e4ede0;
+        --color-danger: #b8202a;
+        --color-danger-hover: #9e1a23;
+        --color-danger-soft: #fae6e7;
 
         /* Text/icon colour on a filled primary surface. */
-        --color-on-primary: #ffffff;
+        --color-on-primary: #fbf8f2;
         /* Text/icon colour on a filled danger surface. */
-        --color-on-danger: #ffffff;
+        --color-on-danger: #fbf8f2;
         /* Lift under a hovered primary button. */
-        --shadow-primary-hover: 0 8px 22px rgba(37, 99, 235, 0.28);
+        --shadow-primary-hover: 0 8px 22px rgba(184, 32, 42, 0.28);
         /* Modal and full-screen overlay wash. */
-        --color-scrim: rgba(15, 23, 42, 0.55);
+        --color-scrim: rgba(28, 26, 23, 0.6);
 
         /* Section accents (main menu cards). */
-        --color-accent-verbs: #2563eb;
-        --color-accent-conversation: #8b5cf6;
-        --color-accent-settings: #64748b;
+        --color-accent-verbs: #b8202a;
+        --color-accent-conversation: #1c1a17;
+        --color-accent-settings: #686157;
 
         /* Italian tricolour, used as a brand mark only — never as UI state. */
         --color-flag-green: #009246;
@@ -52,12 +76,12 @@
         --color-flag-red: #ce2b37;
 
         /* Correction banner in chat: "ok" for a confirmation, "note" for a fix. */
-        --color-correction-ok-bg: #e8f5e9;
-        --color-correction-ok-border: #a5d6a7;
-        --color-correction-ok-text: #2e7d32;
-        --color-correction-note-bg: #fff8e6;
-        --color-correction-note-border: #e8d48a;
-        --color-correction-note-text: #6b5a00;
+        --color-correction-ok-bg: #e4ede0;
+        --color-correction-ok-border: #2f6a3d;
+        --color-correction-ok-text: #1b4425;
+        --color-correction-note-bg: #fbf5e6;
+        --color-correction-note-border: #d8bf75;
+        --color-correction-note-text: #5f4f00;
 
         /* Categorical verb-badge palette, assigned by verb id (see config.ts). */
         --color-badge-1-bg: #eeedfe; --color-badge-1-fg: #3c3489;
@@ -69,66 +93,54 @@
         --color-badge-7-bg: #fce7f3; --color-badge-7-fg: #9d174d;
         --color-badge-8-bg: #ecfdf5; --color-badge-8-fg: #065f46;
 
-        --color-brand-red: #dc2626;
-        --color-brand-red-hover: #b91c1c;
-        --color-brand-red-soft: #fee2e2;
-        --color-brand-red-subtle: #fef2f2;
-        --color-brand-red-border: #fecaca;
-        --color-surface-hover: #f8fafc;
-        --color-surface-card: #ffffff;
-        --color-surface-muted: #f1f5f9;
-        --color-call-overlay: rgba(15, 23, 42, 0.65);
-
-        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-        --shadow-md: 0 4px 14px rgba(37, 99, 235, 0.12);
-        --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.18);
+        --shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.06);
+        --shadow-md: 0 4px 14px rgba(184, 32, 42, 0.12);
+        --shadow-lg: 0 18px 40px rgba(28, 26, 23, 0.18);
       }
       [data-theme="dark"] {
-        --color-text-primary: #e2e8f0;
-        --color-text-secondary: #94a3b8;
-        --color-background-primary: #111827;
-        --color-background-secondary: #0b1220;
-        --color-background-tint: #15213a;
-        --color-border-primary: #334155;
-        --color-border-secondary: #283449;
-        --color-border-tertiary: #1f2a3d;
+        --color-text-primary: #efe8da;
+        --color-text-secondary: #a89f90;
+        --color-background-primary: #24211c;
+        --color-background-secondary: #1a1815;
+        --color-background-tint: #2e2a24;
+        --color-border-primary: #3d382f;
+        --color-border-secondary: #4d473c;
+        --color-border-tertiary: #343028;
 
-        --color-primary: #60a5fa;
-        --color-primary-hover: #3b82f6;
-        --color-primary-active: #2563eb;
-        --color-primary-soft: #1e3a8a;
-        --color-primary-softer: #172554;
-        --color-primary-ring: rgba(96, 165, 250, 0.4);
+        --color-primary: #cb353f;
+        --color-primary-text: #ec6c66;
+        --color-primary-hover: #b02830;
+        --color-primary-active: #991f26;
+        --color-primary-soft: #3f1b1e;
+        --color-primary-softer: #2e1416;
+        --color-primary-ring: rgba(236, 108, 102, 0.4);
 
-        --color-success: #10b981;
-        --color-success-soft: #064e3b;
-        --color-danger: #f87171;
-        --color-danger-hover: #ef4444;
-        --color-danger-soft: #7f1d1d;
+        --color-success: #6fb07f;
+        --color-success-soft: #1a3322;
+        --color-danger: #ec6c66;
+        --color-danger-hover: #f87171;
+        --color-danger-soft: #451719;
 
-        /* The dark primary (#60a5fa) is light: white text on it fails contrast,
-           so the on-primary colour flips to near-black here. */
-        --color-on-primary: #0b1220;
-        /* Same reason as on-primary: the dark danger colour is a light red. */
-        --color-on-danger: #2a0a0a;
+        --color-on-primary: #f7f1e5;
+        --color-on-danger: #1a1815;
         --shadow-primary-hover: 0 8px 22px rgba(0, 0, 0, 0.5);
-        --color-scrim: rgba(0, 0, 0, 0.65);
+        --color-scrim: rgba(0, 0, 0, 0.7);
 
-        --color-accent-verbs: #60a5fa;
-        --color-accent-conversation: #a78bfa;
-        --color-accent-settings: #94a3b8;
+        --color-accent-verbs: #ec6c66;
+        --color-accent-conversation: #efe8da;
+        --color-accent-settings: #a89f90;
 
         /* The flag is the flag in both themes. */
         --color-flag-green: #009246;
         --color-flag-white: #ffffff;
         --color-flag-red: #ce2b37;
 
-        --color-correction-ok-bg: #0d3f22;
-        --color-correction-ok-border: #2f6f45;
-        --color-correction-ok-text: #a7e5bd;
-        --color-correction-note-bg: #3b3210;
-        --color-correction-note-border: #7a6714;
-        --color-correction-note-text: #ecd98f;
+        --color-correction-ok-bg: #1f3024;
+        --color-correction-ok-border: #6fb07f;
+        --color-correction-ok-text: #a9dbb3;
+        --color-correction-note-bg: #383015;
+        --color-correction-note-border: #d8bf75;
+        --color-correction-note-text: #f2dd96;
 
         --color-badge-1-bg: #2a2470; --color-badge-1-fg: #c5bffb;
         --color-badge-2-bg: #0c3f33; --color-badge-2-fg: #8fe0c9;
@@ -138,16 +150,6 @@
         --color-badge-6-bg: #3d1a63; --color-badge-6-fg: #d6b4f7;
         --color-badge-7-bg: #521030; --color-badge-7-fg: #f6b0cf;
         --color-badge-8-bg: #083b2a; --color-badge-8-fg: #86dfb8;
-
-        --color-brand-red: #ef4444;
-        --color-brand-red-hover: #f87171;
-        --color-brand-red-soft: #7f1d1d;
-        --color-brand-red-subtle: #450a0a;
-        --color-brand-red-border: #991b1b;
-        --color-surface-hover: #1e293b;
-        --color-surface-card: #1e293b;
-        --color-surface-muted: #0f172a;
-        --color-call-overlay: rgba(0, 0, 0, 0.8);
 
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
         --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -172,43 +174,15 @@
         -webkit-font-smoothing: antialiased;
       }
       #root {
-        width: 100vw;
-        height: 100vh;
-        height: 100dvh;
-        max-width: 100vw;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
+        max-width: 720px;
+        margin: 0 auto;
+        /* Respect the notch and the home indicator when installed. */
+        padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+          calc(48px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
       }
-      @keyframes waveBar {
-        0%, 100% { height: 6px; }
-        50% { height: 26px; }
+      @media (max-width: 480px) {
+        #root { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
       }
-      .animate-wave-1 { animation: waveBar 1.2s ease-in-out infinite; }
-      .animate-wave-2 { animation: waveBar 0.9s ease-in-out 0.2s infinite; }
-      .animate-wave-3 { animation: waveBar 1.4s ease-in-out 0.4s infinite; }
-      .animate-wave-4 { animation: waveBar 0.8s ease-in-out 0.1s infinite; }
-      .animate-wave-5 { animation: waveBar 1.1s ease-in-out 0.3s infinite; }
-
-      @keyframes pulseGlow {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.15); opacity: 0.9; }
-      }
-      .animate-pulse-glow { animation: pulseGlow 2.4s ease-in-out infinite; }
-
-      @keyframes gentleFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-4px); }
-      }
-      .animate-float { animation: gentleFloat 3s ease-in-out infinite; }
-
-      @media (max-width: 680px) {
-        .hidden-on-mobile { display: none !important; }
-      }
-      @media (min-width: 681px) {
-        .mobile-convo-toggle { display: none !important; }
-      }
-
       .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
       .tricolore {
         height: 4px;

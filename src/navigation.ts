@@ -10,7 +10,7 @@
 // Pure functions, so the mapping is testable without a DOM.
 // ---------------------------------------------------------------------------
 
-export type Section = "home" | "verbs-learning" | "conversation" | "settings";
+export type Section = "home" | "verbs-learning" | "conversation" | "lab" | "settings";
 export type StageKind = "home" | "lesson" | "summary";
 
 export type NavState = { section: Section; stage: StageKind };
@@ -21,6 +21,7 @@ const SECTION_PATH: Record<Section, string> = {
   home: "/",
   "verbs-learning": "/verbs",
   conversation: "/conversation",
+  lab: "/lab",
   settings: "/settings",
 };
 

@@ -1,18 +1,22 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { LangProvider, useLang } from "./context/LangContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { StreakProvider, useStreak } from "./context/StreakContext";
+import { StreakProvider } from "./context/StreakContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import type { Lesson } from "./curriculum/types";
 import { isForward, navFromPath, pathFor, sameNav, type NavState } from "./navigation";
+import { btn, card } from "./utils";
+import { useCopy } from "./copy";
 import LangToggle from "./components/LangToggle";
 import LanguageGate from "./components/LanguageGate";
+import MainMenu from "./components/MainMenu";
 import Settings from "./components/Settings";
 import StreakBadge from "./components/StreakBadge";
 import VerbHome from "./components/VerbHome";
 import LessonPlayer from "./components/lesson/LessonPlayer";
 import LessonSummary from "./components/LessonSummary";
 import Conversation from "./components/Conversation";
+import { ExperimentLab } from "./components/lab/ExperimentLab";
 
 type Section = NavState["section"];
 type Stage =
@@ -23,7 +27,6 @@ type Stage =
 function AppContent() {
   const { lang, chosen } = useLang();
   const { completeUnit } = useProfile();
-  const streak = useStreak();
   // Deep links land on a section; lessons cannot be reconstructed from a URL.
   const initial = useRef(navFromPath(window.location.pathname)).current;
   const [section, setSection] = useState<Section>(initial.section);
@@ -32,6 +35,7 @@ function AppContent() {
   const [backSignal, setBackSignal] = useState(0);
 
   const inLesson = section === "verbs-learning" && stage.kind === "lesson";
+  const showHomeButton = section !== "home" && !inLesson;
 
   const nav: NavState = { section, stage: stage.kind };
   const navRef = useRef(nav);
@@ -71,9 +75,10 @@ function AppContent() {
   }, []);
 
   const subtitle: Record<Section, string> = {
-    home: lang === "en" ? "Conversational Italian" : "Italiano conversacional",
+    home: lang === "en" ? "Choose a section" : "Elige una sección",
     "verbs-learning": lang === "en" ? "Verb lessons" : "Lecciones de verbos",
-    conversation: lang === "en" ? "Chat and calls" : "Chat y llamadas",
+    conversation: lang === "en" ? "Chat with Marco" : "Habla con Marco",
+    lab: lang === "en" ? "AI & Voice Experimentation" : "Laboratorio de IA y Voz",
     settings: lang === "en" ? "Personalize the app" : "Personaliza la app",
   };
 
@@ -88,58 +93,162 @@ function AppContent() {
     });
   }, [completeUnit]);
 
-  const goToSection = useCallback((sec: Section) => {
-    setSection(sec);
+  const goHome = useCallback(() => {
     setStage({ kind: "home" });
+    setSection("home");
   }, []);
 
   const backToVerbHome = useCallback(() => setStage({ kind: "home" }), []);
 
-  // When viewing verbs or settings: clean full-page container with top bar
-  if (section === "verbs-learning" || section === "settings") {
-    return (
-      <div className="h-screen w-screen bg-slate-100 text-slate-900 font-sans flex flex-col overflow-hidden">
-        {!chosen && <LanguageGate />}
-        <header className="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-xs z-10">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => goToSection("conversation")}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              ← {lang === "en" ? "Back to Chat" : "Volver al chat"}
-            </button>
-            <div className="h-4 w-px bg-slate-200" />
-            <span className="font-bold text-sm text-slate-900">{subtitle[section]}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <StreakBadge />
-            <LangToggle />
-          </div>
-        </header>
+  const c = useCopy();
 
-        <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 overflow-y-auto">
-          {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
-          {section === "verbs-learning" && stage.kind === "lesson" && (
-            <LessonPlayer lesson={stage.lesson} title={stage.title} backSignal={backSignal} onExit={backToVerbHome} onFinish={finishLesson} />
-          )}
-          {section === "verbs-learning" && stage.kind === "summary" && (
-            <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={backToVerbHome} />
-          )}
-          {section === "settings" && <Settings onBack={() => goToSection("conversation")} />}
-        </main>
-      </div>
-    );
-  }
-
-  // Primary view: Full-screen filling conversational chat and audio calls (Italix-AI UI)
   return (
-    <div className="h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
+    <div style={{ padding: "0.5rem 0", fontFamily: "var(--font-sans)" }}>
       {!chosen && <LanguageGate />}
-      <Conversation
-        onNavigate={goToSection}
-        activeSection={section}
-        streakCount={streak.currentStreak}
-      />
+
+      {/* Editorial Italian Header */}
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 18,
+          padding: "12px 16px",
+          background: "var(--color-background-primary)",
+          borderRadius: 8,
+          border: "1px solid var(--color-border-secondary)",
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: 24,
+                fontWeight: 700,
+                color: "var(--color-text-primary)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Corso
+            </span>
+            <span style={{ color: "var(--color-primary-text)", fontSize: 24, fontWeight: 700 }}>·</span>
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "var(--color-text-secondary)",
+              marginTop: 1,
+            }}
+          >
+            {subtitle[section]}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <StreakBadge />
+          {showHomeButton && (
+            <button
+              onClick={goHome}
+              className="btn-secondary"
+              style={{ ...btn(), padding: "6px 12px", fontSize: 12.5, fontWeight: 600 }}
+            >
+              {lang === "en" ? "Menu" : "Menú"}
+            </button>
+          )}
+          <LangToggle />
+        </div>
+      </header>
+
+      {/* Main Content View */}
+      <main key={`${section}-${stage.kind}`} className="fade-in" style={card}>
+        {section === "home" && <MainMenu onSelectSection={(s) => { setSection(s); setStage({ kind: "home" }); }} />}
+
+        {section === "verbs-learning" && stage.kind === "home" && <VerbHome onStart={startLesson} />}
+        {section === "verbs-learning" && stage.kind === "lesson" && (
+          <LessonPlayer lesson={stage.lesson} title={stage.title} backSignal={backSignal} onExit={backToVerbHome} onFinish={finishLesson} />
+        )}
+        {section === "verbs-learning" && stage.kind === "summary" && (
+          <LessonSummary errors={stage.errors} startTime={stage.startTime} onReturnHome={backToVerbHome} />
+        )}
+
+        {section === "conversation" && <Conversation />}
+        {section === "lab" && <ExperimentLab />}
+        {section === "settings" && <Settings onBack={goHome} />}
+      </main>
+
+      {/* Pattern C Mobile Bottom Navigation Bar */}
+      {!inLesson && (
+        <nav
+          aria-label="Main Navigation"
+          style={{
+            position: "sticky",
+            bottom: 8,
+            marginTop: 20,
+            padding: "8px 12px calc(8px + env(safe-area-inset-bottom))",
+            background: "var(--color-background-primary)",
+            border: "1px solid var(--color-border-secondary)",
+            borderRadius: 8,
+            boxShadow: "var(--shadow-md)",
+            display: "flex",
+            justifyContent: "space-around",
+            alignItems: "center",
+            zIndex: 40,
+          }}
+        >
+          {[
+            { id: "home", label: c("nav.talk"), icon: "💬" },
+            { id: "verbs-learning", label: c("nav.learn"), icon: "📚" },
+            { id: "lab", label: c("nav.lab"), icon: "🧪" },
+            { id: "settings", label: c("nav.you"), icon: "⚙️" },
+          ].map((tab) => {
+            const active = section === tab.id || (tab.id === "home" && section === "conversation");
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setSection(tab.id as Section);
+                  setStage({ kind: "home" });
+                }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: "4px 14px",
+                  color: active ? "var(--color-primary-text)" : "var(--color-text-secondary)",
+                  fontWeight: active ? 700 : 500,
+                  fontSize: 11.5,
+                  fontFamily: "var(--font-sans)",
+                  position: "relative",
+                }}
+              >
+                <span style={{ fontSize: 18 }}>{tab.icon}</span>
+                <span>{tab.label}</span>
+                {active && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: -2,
+                      width: 18,
+                      height: 2,
+                      borderRadius: 1,
+                      background: "var(--color-primary)",
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
